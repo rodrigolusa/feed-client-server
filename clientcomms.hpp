@@ -19,6 +19,7 @@ public:
 int connectToServer(char* hostname); //tries to establish connetion to server, returns 0 if successful and -1 otherwise
 void closeConnection(); //closes connection between client and server
 int sendMessage(char* msg);
+int login(char* username);
 char* readMessage();
 
 };

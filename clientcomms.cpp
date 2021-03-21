@@ -33,6 +33,7 @@ if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0){
 }
 
 void ClientComms::closeConnection(){ //closes connection between client and server
+  sendMessage("F");
   close(sockfd);
 }
 int ClientComms::sendMessage(char* msg){
@@ -57,10 +58,20 @@ char* ClientComms::readMessage(){
   return buffer;
 }
 
+int ClientComms::login(char* username){
+  sendMessage(username);
+  char* loginMsg = readMessage();
+  if(loginMsg[0] == '0')
+    return 0;
+  else
+  {
+    return -1;
+  }
+}
 
 int main(int argc, char *argv[])
 {
-  if (argc < 2) {
+  if (argc < 3) {
   fprintf(stderr,"usage %s hostname\n", argv[0]);
   exit(0);
   }
@@ -68,13 +79,22 @@ int main(int argc, char *argv[])
   ClientComms manager;
   char *buffer = new char[256];
   int n;
-  if(manager.connectToServer(argv[1]) != 0)
+  if(manager.connectToServer(argv[2]) != 0)
     cout << "Error connecting to server\n";
+
+  if(manager.login(argv[1]) == 0)
+    cout << "Login successful" << endl << "Welcome, " << argv[1];
+  else{
+    cout << "Login error, disconnect one device to continue";
+    manager.closeConnection();
+    return 0;
+  }
   printf("Enter the message: ");
   bzero(buffer, 256);
   fgets(buffer, 256, stdin);
   manager.sendMessage(buffer);
   cout << manager.readMessage();
+
 
 	manager.closeConnection();
   return 0;

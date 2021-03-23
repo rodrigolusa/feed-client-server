@@ -36,66 +36,27 @@ int 	serverComms::acceptConnections(){
 		cout << "Connection accepted" << endl;
 		return newsockfd;
 	}
-	char* readMessage(int socket){
-		/* read from the socket */
-		int n;
-		char* buffer = new char[256];
-		bzero(buffer,256);
-		n = read(socket, buffer, 256);
-		if (n < 0){
-			printf("ERROR reading from socket");
-			return "error";
-		}
-		return buffer;
-
-	}
-
-int writeMessage(int socket, char* msg){
-		/* write in the socket */
-		int n;
-		n = write(socket,msg,256);
-		if (n < 0)
-			cout << "ERROR writing to socket";
-		return 0;
-	}
 
 void 	serverComms::closeSocket(){
 			close(sockfd);
 	}
 
-int serverComms::attemptLogin(session* user){
-	char* username = readMessage(user->socket);
-	int count = 0;
-	for(auto it = begin(clientsessions); it != end(clientsessions); ++it)
-			{
-				if(it->username.compare(username) == 0)
-				{
-					count++;
-					if(count == 2)
-						return -1;
-				}
-			}
-			string s(username);
-			user->username = s;
-			clientsessions.push_back(*user);
-			return 0;
-		}
+
 
 void* ClientManagement(void* arg){
-	session user = *(session*) arg;
-	string username = user.username;
-	int socket = user.socket;
-	cout << "User " << username << " logged in\n";
-	while(true){
-		char*	msg =  readMessage(socket);
+	Session *user = *(Session**) &arg;
+	cout << "User " << user->getUsername() << " logged in\n";
+	while(user->isActive()){
+		char* msg = user->readMessage();
 		cout << "new message received: " << msg;
 		if(msg[0] == 'F'){
-			close(socket);
-			break;
+			user->terminateSession();
 		}
 		else
-			writeMessage(socket,"I received your message\n");
+			user->sendMessage("I got your message");
 	}
+	delete user;
+	pthread_exit(NULL);
 }
 int main(int argc, char *argv[])
 {
@@ -104,21 +65,24 @@ int main(int argc, char *argv[])
 	int  newsockfd, n;
 	commManager.init();
 	int count = 0;
+	pthread_mutex_init(&sessionvector_mutex,NULL);
 
 	while(true){
 		newsockfd = commManager.acceptConnections();
-		session *clientsession = new session();
-		clientsession->socket = newsockfd;
 
-		if(commManager.attemptLogin(clientsession) != 0){
+		Session* new_session = new Session(newsockfd);
+
+
+		if(new_session->attemptLogin() != 0){
 			cout << "User already logged in twice.\n";
-			writeMessage(clientsession->socket, "-1");
+			new_session->sendMessage("-1");
 		}
 		else{
-			writeMessage(clientsession->socket, "0");
-			pthread_t new_client;
-			pthread_create(&new_client, NULL, ClientManagement, clientsession);
+			new_session->sendMessage("0");
+			pthread_t new_thread;
+			pthread_create(&new_thread, NULL, ClientManagement, new_session);
 			}
+
 		}
 
 		cout << "Terminando...\n";

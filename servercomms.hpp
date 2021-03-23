@@ -7,28 +7,20 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+pthread_mutex_t sessionvector_mutex;
+#include "usersession.hpp"
+#include "usersession.cpp"
 #pragma once
 using namespace std;
-
 #define PORT 4000
-
-typedef struct{
-	int socket;
-	string username;
-}session;
 
 
 class serverComms{
 private:
 	int sockfd;
-	vector<session> clientsessions;
 public:
 	int init();
 	int acceptConnections();
 	void closeSocket();
-	int attemptLogin(session* user);
 };
-
 	void* ClientManagement(void* arg);
-	char* readMessage(int socket);
-	int writeMessage(int socket,char* msg);

@@ -7,7 +7,8 @@ class profile{
     int activeSessions;
 
     public:
-    profile();
+    profile(string i, int s){
+        id = i;
+        activeSessions = s;
+    }
 };
-
-profile::profile(){}

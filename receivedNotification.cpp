@@ -10,7 +10,11 @@ class receivedNotification{
     int pendingFollowersToReceive;
 
     public:
-    receivedNotification();
+    receivedNotification(int i, int t, string m, int s, int p){
+        id = i;
+        timestamp = t;
+        message = m;
+        size = s;
+        pendingFollowersToReceive = p;
+    };
 };
-
-receivedNotification::receivedNotification(){}

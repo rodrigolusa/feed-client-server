@@ -7,7 +7,8 @@ class pendingNotification{
     int notificationId;
 
     public:
-    pendingNotification();
+    pendingNotification(string p, int n){
+        profileId = p;
+        notificationId = n;
+    };
 };
-
-pendingNotification::pendingNotification(){}

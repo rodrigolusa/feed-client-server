@@ -6,8 +6,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
-#include "basiccomm.hpp"
-#include "basiccomm.cpp"
+#include "../common/basiccomm.hpp"
+#include "../common/basiccomm.cpp"
 
 using namespace std;
 #pragma once

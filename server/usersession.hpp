@@ -1,4 +1,6 @@
 #pragma once
+#include "../common/basiccomm.hpp"
+#include "../common/basiccomm.cpp"
 using namespace std;
 class Session: public BasicComm{
 private: //session info, add more as it is needed

@@ -5,7 +5,6 @@ using namespace std;
 #define PORT 4000
 
 	int 	serverComms::init(){
-		char buffer[256];
 		struct sockaddr_in serv_addr, cli_addr;
 
 		if ((this->sckt = socket(AF_INET, SOCK_STREAM, 0)) == -1){
@@ -18,7 +17,7 @@ using namespace std;
 		bzero(&(serv_addr.sin_zero), 8);
 
 		if (bind(this->sckt, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
-			printf("ERROR on binding");
+			cout << "ERROR on binding" << endl;
 			return -1;
 		}
 
@@ -67,7 +66,8 @@ int main(int argc, char *argv[])
 
 	serverComms commManager;
 	int  newsockfd, n;
-	commManager.init();
+	if(commManager.init() != 0)
+		exit(1);
 	int count = 0;
 	pthread_mutex_init(&sessionvector_mutex,NULL);
 

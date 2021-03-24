@@ -8,7 +8,7 @@ using namespace std;
 		char buffer[256];
 		struct sockaddr_in serv_addr, cli_addr;
 
-		if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
+		if ((this->sckt = socket(AF_INET, SOCK_STREAM, 0)) == -1){
 					cout << "ERROR opening socket";
 					return -1;
 				}
@@ -17,12 +17,12 @@ using namespace std;
 		serv_addr.sin_addr.s_addr = INADDR_ANY;
 		bzero(&(serv_addr.sin_zero), 8);
 
-		if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
+		if (bind(this->sckt, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
 			printf("ERROR on binding");
 			return -1;
 		}
 
-		listen(sockfd, 5);
+		listen(this->sckt, 5);
 
 		return 0;
 	}
@@ -31,14 +31,14 @@ int 	serverComms::acceptConnections(){
 		struct sockaddr_in cli_addr;
 		socklen_t clilen;
 		clilen = sizeof(struct sockaddr_in);
-		if ((newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen)) == -1)
+		if ((newsockfd = accept(this->sckt, (struct sockaddr *) &cli_addr, &clilen)) == -1)
 			cout << "ERROR on accept";
 		cout << "Connection accepted" << endl;
 		return newsockfd;
 	}
 
 void 	serverComms::closeSocket(){
-			close(sockfd);
+			close(this->sckt);
 	}
 
 
@@ -47,13 +47,17 @@ void* ClientManagement(void* arg){
 	Session *user = *(Session**) &arg;
 	cout << "User " << user->getUsername() << " logged in\n";
 	while(user->isActive()){
-		char* msg = user->readMessage();
-		cout << "new message received: " << msg;
-		if(msg[0] == 'F'){
+
+		packet* pkt  = new packet;
+		pkt = user->readMessage();
+		if(pkt->type == LOGOUT){
 			user->terminateSession();
 		}
-		else
-			user->sendMessage("I got your message");
+		else{
+				user->sendMessage(SEND,"I got your message");
+				cout << "mensagem recebida foi " << pkt->_payload;
+		}
+
 	}
 	delete user;
 	pthread_exit(NULL);
@@ -69,16 +73,11 @@ int main(int argc, char *argv[])
 
 	while(true){
 		newsockfd = commManager.acceptConnections();
-
 		Session* new_session = new Session(newsockfd);
-
-
 		if(new_session->attemptLogin() != 0){
 			cout << "User already logged in twice.\n";
-			new_session->sendMessage("-1");
 		}
 		else{
-			new_session->sendMessage("0");
 			pthread_t new_thread;
 			pthread_create(&new_thread, NULL, ClientManagement, new_session);
 			}

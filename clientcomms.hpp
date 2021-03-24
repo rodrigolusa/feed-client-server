@@ -6,21 +6,25 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include "basiccomm.hpp"
+#include "basiccomm.cpp"
 
 using namespace std;
 #pragma once
 
 #define PORT 4000
 
-class ClientComms{
+class ClientComms: public BasicComm{
 private:
-  int sockfd;
+  bool connected;
 public:
-
 int connectToServer(char* hostname); //tries to establish connetion to server, returns 0 if successful and -1 otherwise
 void closeConnection(); //closes connection between client and server
-int sendMessage(char* msg);
 int login(char* username);
-char* readMessage();
+void setConnected(bool value);
+ClientComms(){
+  this->connected = false;
+  this->seqnum = 0;
+}
 
 };

@@ -8,16 +8,15 @@
 #include <netinet/in.h>
 #include <pthread.h>
 pthread_mutex_t sessionvector_mutex;
+#include "basiccomm.hpp"
+#include "basiccomm.cpp"
 #include "usersession.hpp"
 #include "usersession.cpp"
 #pragma once
 using namespace std;
 #define PORT 4000
 
-
-class serverComms{
-private:
-	int sockfd;
+class serverComms: public BasicComm{
 public:
 	int init();
 	int acceptConnections();

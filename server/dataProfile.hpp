@@ -9,7 +9,7 @@ using namespace std;
 class dataProfile{
     public:
     string id;
-    list<profile> followers;
+    list<string> followers;
     list<receivedNotification> receivedNotifications;
     list<pendingNotification> pendingNotifications;
 };

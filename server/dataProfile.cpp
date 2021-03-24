@@ -4,21 +4,36 @@
 using namespace std;
 
 class dataProfile{
-    string id;
-    list<profile> followers;
+    profile prof;
+    list<string> followers;
     list<receivedNotification> receivedNotifications;
     list<pendingNotification> pendingNotifications;
 
     public:
-    dataProfile(string i){
-        id = i;       
+    dataProfile(profile i){
+        prof = i;       
     };
 
-    void addFollow(profile p){
-        list<profile>::iterator it;
+    void addFollower(string p){
+        list<string>::iterator it;
         it = followers.end();
         followers.insert(it, p);
-    };
+    }
+
+    list<string> getFollowers(){
+        return followers;
+    }
+
+    void removeFollower(string p){  
+        list<string>::iterator it;
+        it = followers.end();
+        for(it = followers.begin(); it!= followers.end(); it++){
+            
+            if(*it == p){
+                followers.erase(it);
+            }
+        } 
+    }
 
     void addReceivedNotification(receivedNotification r){
         list<receivedNotification>::iterator it;
@@ -32,10 +47,6 @@ class dataProfile{
         pendingNotifications.insert(it, p);
     }
 
-    list<profile> getFollowers(){
-        return followers;
-    }
-
     list<receivedNotification> getReceivedNotifications(){
         return receivedNotifications;
     }
@@ -44,25 +55,26 @@ class dataProfile{
         return pendingNotifications;
     }
 
-     void removeFollow(profile p){
-        /*
-        list<profile>::iterator it;
-        it = followers.end();
-        for(it = followers.begin(); it!= followers.end(); it++){
-            //TODO
-            if(*it == p){
-                followers.erase(it);
+    void removeReceivedNotification(int r){
+        list<receivedNotification>::iterator it;
+        it = receivedNotifications.end();
+        for(it = receivedNotifications.begin(); it!= receivedNotifications.end(); it++){
+            
+            if(it->id == r){
+                receivedNotifications.erase(it);
             }
         }
-        */
-    };
-
-    void removeReceivedNotification(receivedNotification r){
-        //TODO
     }
 
-    void removePendingNotification(pendingNotification p){
-        //TODO
+    void removePendingNotification(string p){
+        list<pendingNotification>::iterator it;
+        it = pendingNotifications.end();
+        for(it = pendingNotifications.begin(); it!= pendingNotifications.end(); it++){
+            
+            if(it->profileId == p){
+                pendingNotifications.erase(it);
+            }
+        } 
     }
 
 };

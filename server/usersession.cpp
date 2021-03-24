@@ -1,4 +1,5 @@
 #include "usersession.hpp"
+
 int Session::attemptLogin(){
   pthread_mutex_lock(&sessionvector_mutex);
   packet* pkt = readMessage();

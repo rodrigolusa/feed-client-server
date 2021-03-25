@@ -1,10 +1,11 @@
+#pragma once
 #include <string>
 #include <list>
 
 using namespace std;
 
 class Profile{
-    public:
+public:
     string id;
     int activeSessions;
     list<string> following;

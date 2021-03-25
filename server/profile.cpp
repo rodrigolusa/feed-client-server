@@ -2,6 +2,10 @@
 
 using namespace std;
 
+Profile::Profile(){
+    
+}
+
 Profile::Profile(string i, int s){
     id = i;
     activeSessions = s;

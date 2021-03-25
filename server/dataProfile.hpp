@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include <list>
 #include "profile.hpp"
@@ -7,9 +8,8 @@
 using namespace std;
 
 class DataProfile{
-    public:
+public:
     string id;
-
     list<string> followers;
     list<ReceivedNotification> receivedNotifications;
     list<PendingNotification> pendingNotifications;

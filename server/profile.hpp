@@ -3,10 +3,16 @@
 
 using namespace std;
 
-class profile{
+class Profile{
     public:
     string id;
     int activeSessions;
-    list<string> followers;
+    list<string> following;
+
+    Profile();
+    Profile(string i, int s);
+    void AddFollowing(string p);
+    list<string> GetFollowing();
+    void RemoveFollowing(string p);
 };
 

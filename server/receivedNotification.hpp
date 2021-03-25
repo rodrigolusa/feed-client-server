@@ -2,11 +2,13 @@
 
 using namespace std;
 
-class receivedNotification{
+class ReceivedNotification{
     public:
     int id;
     int timestamp;
     string message;
     int size;
     int pendingFollowersToReceive;
+
+    ReceivedNotification(int i, int t, string m, int s, int p);
 };

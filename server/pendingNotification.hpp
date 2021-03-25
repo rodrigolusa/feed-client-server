@@ -2,9 +2,10 @@
 
 using namespace std;
 
-class pendingNotification{
+class PendingNotification{
     public:
     string profileId;
     int notificationId;
     
+    PendingNotification(string p, int n);
 };

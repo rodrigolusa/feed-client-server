@@ -28,6 +28,7 @@ void Profile::RemoveFollowing(string p){
         
         if(*it == p){
             following.erase(it);
+            break;
         }
     } 
 }

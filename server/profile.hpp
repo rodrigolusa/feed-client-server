@@ -3,14 +3,14 @@
 #include <list>
 #include "receivedNotification.hpp"
 #include "pendingNotification.hpp"
-//#include "usersession.hpp"
+#include "usersession.hpp"
 
 using namespace std;
 
 class Profile{
 public:
     string id;
-    list<int> activeSessions;
+    list<Session> activeSessions;
     list<string> followers;
     list<string> following;
     list<ReceivedNotification> receivedNotifications;

@@ -12,7 +12,7 @@ ClientComms client;
 void* ReceiveMessages(void* arg)
 {
     MainWindow* w = static_cast<MainWindow *>(arg);
-    w->news();
+    //w->news();
 }
 
 void* SendMessages(void* arg)
@@ -52,13 +52,13 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    cout << "Conectou";
+
     QApplication app(argc, argv);
     MainWindow w;
     w.setUserName(argv[1]);
 
-    //start thread to send messages.
-    pthread_t send_messages_thread;
-    pthread_create(&send_messages_thread, NULL, SendMessages, &w);
+    w.show();
 
     //start thread to receive messages.
     pthread_t receive_messages_thread;

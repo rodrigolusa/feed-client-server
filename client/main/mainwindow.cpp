@@ -19,8 +19,9 @@ MainWindow::MainWindow(QWidget *parent, std::string title) :
     ui->mensagens_recebidas->viewport()->setAttribute( Qt::WA_TransparentForMouseEvents );
 
     connect( ui->enviar, SIGNAL( clicked() ), this, SLOT( on_send_message_clicked() ) );
-    connect( ui->follow, SIGNAL( clicked() ), this, SLOT( on_follow_clicked() ) );
+    connect( ui->follow_button, SIGNAL( clicked() ), this, SLOT( on_follow_clicked() ) );
     connect( ui->area_mensagem, SIGNAL( textChanged() ), this, SLOT( on_mensagem_textChanged() ) );
+    connect( ui->perfil, SIGNAL( textChanged() ), this, SLOT( on_user_textChanged()) );
 }
 
 MainWindow::~MainWindow()
@@ -90,5 +91,19 @@ void MainWindow::on_mensagem_textChanged()
         QTextCursor cursor(ui->area_mensagem->textCursor());
         cursor.movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
         ui->area_mensagem->setTextCursor(cursor);
+    }
+}
+
+void MainWindow::on_user_textChanged()
+{
+    if(ui->perfil->toPlainText().length() > MAX_TEXT_LENGTH)
+    {
+        int diff = ui->perfil->toPlainText().length() - MAX_TEXT_LENGTH;
+        QString newStr = ui->perfil->toPlainText();
+        newStr.chop(diff);
+        ui->perfil->setText(newStr);
+        QTextCursor cursor(ui->perfil->textCursor());
+        cursor.movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
+        ui->perfil->setTextCursor(cursor);
     }
 }

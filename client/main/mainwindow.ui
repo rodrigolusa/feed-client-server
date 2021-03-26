@@ -251,7 +251,7 @@ QPushButton:pressed {
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="follow_2">
+        <widget class="QPushButton" name="follow_button">
          <property name="styleSheet">
           <string notr="true">QPushButton {
 	color: #FFF;

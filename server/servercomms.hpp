@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <vector>
 #include <stdlib.h>
@@ -6,13 +7,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <algorithm>
 #include <pthread.h>
 pthread_mutex_t sessionvector_mutex;
+
 #include "usersession.hpp"
 #include "usersession.cpp"
-#pragma once
-using namespace std;
+
 #define PORT 4000
+
+using namespace std;
+
 
 class serverComms{
 private:

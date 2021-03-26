@@ -15,15 +15,13 @@ using namespace std;
 #define PORT 4000
 
 class ClientComms: public BasicComm{
-private:
-  bool connected;
+
 public:
 int connectToServer(char* hostname); //tries to establish connetion to server, returns 0 if successful and -1 otherwise
 void closeConnection(); //closes connection between client and server
 int login(char* username);
-void setConnected(bool value);
 ClientComms(){
-  this->connected = false;
+  setActive(false);
   this->seqnum = 0;
 }
 

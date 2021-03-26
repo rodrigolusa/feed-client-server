@@ -5,16 +5,14 @@ using namespace std;
 class Session: public BasicComm{
 private: //session info, add more as it is needed
   string username;
-  bool active;
 public:
   int attemptLogin();
-  void terminateSession();
-  bool isActive();
+  void closeConnection();
   string getUsername();
 
   Session(int socket){
     this->sckt = socket;
-    this->active = true;
+    setActive(true);
     this->seqnum = 0;
   }
 };

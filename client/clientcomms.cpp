@@ -41,14 +41,12 @@ int ClientComms::login(char* username){
   }
 }
 
-void ClientComms::setConnected(bool value){
-  this->connected = value;
-}
 
 void ClientComms::closeConnection(){ //closes connection between client and server
-  if(this->connected)
+  if(this->active)
     sendMessage(LOGOUT);
   close(this->sckt);
+  exit(2);
 }
 
 int main(int argc, char *argv[])
@@ -66,19 +64,21 @@ int main(int argc, char *argv[])
 
   if(manager.login(argv[1]) == 0){
     cout << "Login successful" << endl << "Welcome, " << argv[1];
-    manager.setConnected(true);
+    manager.setActive(true);
     }
   else{
     cout << "Login error, disconnect one device to continue";
     manager.closeConnection();
     return -1;
   }
-
-  printf("Enter the message: ");
-  bzero(buffer, 256);
-  fgets(buffer, 256, stdin);
-  manager.sendMessage(SEND,buffer);
-
+  buffer[0] = 'c';
+  while(buffer[0] != 'A'){
+    printf("Enter the message: ");
+    bzero(buffer, 256);
+    fgets(buffer, 256, stdin);
+    manager.sendMessage(SEND,buffer);
+    manager.readMessage();
+  }
 
 	manager.closeConnection();
   return 0;

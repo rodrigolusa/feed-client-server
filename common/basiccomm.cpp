@@ -74,8 +74,8 @@ int BasicComm::sendMessage(uint16_t cmd, char* data, uint16_t timestamp){
   char* serializedPkt = serializeData(pkt);
   n = write(this->sckt, serializedPkt, maxPacketSize);
   if (n < 0){
-	 cout << "ERROR writing to socket" << endl;
-  return -1;
+	 cout << "Error sending message" << endl;
+   return -1;
   }
   this->seqnum++;
   return 0;
@@ -86,11 +86,29 @@ packet* BasicComm::readMessage(){
 
   char* serialized = new char[maxPacketSize];
   bzero(serialized,maxPacketSize);
-  n = read(this->sckt, serialized, maxPacketSize);
-  if (n < 0){
-   cout << "ERROR writing to socket" << endl;
-   return NULL;
+  int dataRecv = 0;
+  while(dataRecv < maxPacketSize){
+    n = read(this->sckt, serialized+dataRecv, maxPacketSize);
+    if (n < 0){
+      cout << "Error reading message" << endl;
+      closeConnection();
+      break;
+    }
+    if (n == 0){
+      cout << "Connection lost" << endl;
+      closeConnection();
+      break;
+    }
+    dataRecv += n;
   }
   packet* pkt = deserializeData(serialized);
   return pkt;
 }
+
+bool BasicComm::isActive(){
+  return this->active;
+}
+void BasicComm::setActive(bool value){
+  this->active = value;
+}
+//int BasicComm::ping(){}

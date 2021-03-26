@@ -31,9 +31,9 @@ int Session::attemptLogin(){
       return 0;
     }
 
-void Session::terminateSession(){ //closes socket and removes session from vector
+void Session::closeConnection(){ //closes socket and removes session from vector
   close(this->sckt);
-  this->active = false;
+  setActive(false);
   pthread_mutex_lock(&sessionvector_mutex);
   auto it = find(clientsessions.begin(),clientsessions.end(),this);
   if(it != clientsessions.end()) //only erase if not last element, otherwise pop
@@ -43,9 +43,6 @@ void Session::terminateSession(){ //closes socket and removes session from vecto
     pthread_mutex_unlock(&sessionvector_mutex);
 }
 
-bool Session::isActive(){
-  return this->active;
-}
 
 string Session::getUsername(){
   return this->username;

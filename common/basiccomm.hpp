@@ -19,9 +19,13 @@ private:
   packet* deserializeData(char* data);
   int maxPacketSize = sizeof(uint16_t) * 4 + sizeof(char) * (MAX_TWEET_SIZE+1);
 protected:
+	bool active;
   int sckt;
   uint16_t seqnum;
 public:
   int sendMessage(uint16_t cmd,  char* data = NULL, uint16_t timestamp = 0);
   packet* readMessage();
+	void setActive(bool value);
+	bool isActive();
+	virtual void closeConnection() = 0;
 };

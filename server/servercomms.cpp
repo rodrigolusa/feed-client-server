@@ -49,14 +49,15 @@ void* ClientManagement(void* arg){
 
 		packet* pkt  = new packet;
 		pkt = user->readMessage();
-		if(pkt->type == LOGOUT){
-			user->terminateSession();
-		}
-		else{
-				user->sendMessage(SEND,"I got your message");
-				cout << "mensagem recebida foi " << pkt->_payload;
-		}
+		if(user->isActive() == true){//if user crashed, connection is no longer active
+			if(pkt->type == LOGOUT)
+				user->closeConnection();
+			else{
+					user->sendMessage(SEND,"I got your message");
+					cout << "mensagem recebida foi " << pkt->_payload;
+			}
 
+		}
 	}
 	delete user;
 	pthread_exit(NULL);

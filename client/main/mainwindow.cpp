@@ -34,6 +34,11 @@ void MainWindow::setUserName(std::string user_name)
     title = user_name;
 }
 
+void MainWindow::setComm(ClientComms* new_comm)
+{
+    comm = new_comm;
+}
+
 void MainWindow::news()
 {
     while( true ) {
@@ -96,12 +101,20 @@ void MainWindow::on_mensagem_textChanged()
 
 void MainWindow::on_user_textChanged()
 {
-    if(ui->perfil->toPlainText().length() > MAX_TEXT_LENGTH)
+    QString str = ui->perfil->toPlainText();
+    if(str.length() > MAX_TEXT_LENGTH)
     {
         int diff = ui->perfil->toPlainText().length() - MAX_TEXT_LENGTH;
-        QString newStr = ui->perfil->toPlainText();
-        newStr.chop(diff);
-        ui->perfil->setText(newStr);
+        str.chop(diff);
+        ui->perfil->setText(str);
+        QTextCursor cursor(ui->perfil->textCursor());
+        cursor.movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
+        ui->perfil->setTextCursor(cursor);
+    }
+
+    if (str.indexOf("\n", 0) != -1) {
+        str.chop(1);
+        ui->perfil->setText(str);
         QTextCursor cursor(ui->perfil->textCursor());
         cursor.movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
         ui->perfil->setTextCursor(cursor);

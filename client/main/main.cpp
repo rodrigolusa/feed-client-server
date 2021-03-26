@@ -12,13 +12,7 @@ ClientComms client;
 void* ReceiveMessages(void* arg)
 {
     MainWindow* w = static_cast<MainWindow *>(arg);
-    //w->news();
-}
-
-void* SendMessages(void* arg)
-{
-    MainWindow* w = static_cast<MainWindow *>(arg);
-    w->show();
+    w->news();
 }
 
 int main(int argc, char *argv[])
@@ -56,6 +50,7 @@ int main(int argc, char *argv[])
 
     QApplication app(argc, argv);
     MainWindow w;
+    w.setComm(&client);
     w.setUserName(argv[1]);
 
     w.show();

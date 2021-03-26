@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
         cout << "Error connecting to server\n";
         return 0;
     }
-    
+
     //try to login
     int isLogged = client.login(argv[1]);
     if (isLogged != 0)
@@ -58,4 +58,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-

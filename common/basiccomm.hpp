@@ -1,4 +1,12 @@
 #pragma once
+#include <iostream>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
 typedef struct __packet{
 	uint16_t type;
 	uint16_t seqn;

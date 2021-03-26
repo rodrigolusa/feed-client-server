@@ -48,7 +48,7 @@ void ClientComms::closeConnection(){ //closes connection between client and serv
   close(this->sckt);
   exit(2);
 }
-
+/*
 int main(int argc, char *argv[])
 {
   if (argc < 3) {
@@ -83,3 +83,4 @@ int main(int argc, char *argv[])
 	manager.closeConnection();
   return 0;
 }
+*/

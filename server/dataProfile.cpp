@@ -4,7 +4,8 @@
 using namespace std;
 
 DataProfile::DataProfile(Profile i){
-    id = i.id;     
+    id = i.id;
+    p = i;     
 };
 
 void DataProfile::AddFollower(string p){
@@ -24,6 +25,7 @@ void DataProfile::RemoveFollower(string p){
         
         if(*it == p){
             followers.erase(it);
+            break;
         }
     } 
 }
@@ -55,6 +57,7 @@ void DataProfile::RemoveReceivedNotification(int r){
         
         if(it->id == r){
             receivedNotifications.erase(it);
+            break;
         }
     }
 }
@@ -66,6 +69,7 @@ void DataProfile::RemovePendingNotification(string p){
         
         if(it->profileId == p){
             pendingNotifications.erase(it);
+            break;
         }
     } 
 }

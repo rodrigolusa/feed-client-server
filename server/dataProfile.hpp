@@ -4,12 +4,14 @@
 #include "profile.hpp"
 #include "receivedNotification.hpp"
 #include "pendingNotification.hpp"
+#include <iostream>
 
 using namespace std;
 
 class DataProfile{
 public:
     string id;
+    Profile p;
     list<string> followers;
     list<ReceivedNotification> receivedNotifications;
     list<PendingNotification> pendingNotifications;

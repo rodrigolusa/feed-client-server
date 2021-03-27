@@ -53,8 +53,8 @@ void* ClientManagement(void* arg){
 			if(pkt->type == LOGOUT)
 				user->connectionInterrupted();
 			else{
-					user->sendMessage(SEND,"I got your message");
-					cout << "mensagem recebida foi " << pkt->_payload;
+					user->sendMessage(SEND,(char*)pkt->_payload);
+					cout << "mensagem recebida foi " << pkt->_payload << endl;
 			}
 
 		}

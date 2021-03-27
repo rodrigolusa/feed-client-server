@@ -89,6 +89,15 @@ void ClientComms::closeSocket(){
   close(this->sckt);
 }
 
+void ClientComms::init(char* username, char* hostname, int port){
+  setActive(false);
+  this->username = username;
+  this->hostname = hostname;
+  this->port = port;
+  this->seqnum = 0;
+}
+
+/*
 int main(int argc, char *argv[])
 {
   if (argc < 3) {
@@ -124,3 +133,4 @@ int main(int argc, char *argv[])
 	manager.connectionInterrupted();
   return 0;
 }
+*/

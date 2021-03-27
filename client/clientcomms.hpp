@@ -17,12 +17,7 @@ int login();
 void attemptReconnect();
 void terminateConnection();
 void closeSocket();
-ClientComms(char* username, char* hostname, int port){
-  setActive(false);
-  this->username = username;
-  this->hostname = hostname;
-  this->port = port;
-  this->seqnum = 0;
-}
+void init(char* username,char* hostname, int port);
+
 
 };

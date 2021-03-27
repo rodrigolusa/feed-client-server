@@ -28,9 +28,9 @@ int main(int argc, char *argv[])
         cout << "too many arguments." << std::endl;
         return 0;
     }
-
+    client.init(argv[1],argv[2],atoi(argv[3]));
     //try to connect
-    int isConnected = client.connectToServer(argv[2]);
+    int isConnected = client.connectToServer();
     if (isConnected != 0)
     {
         cout << "Error connecting to server\n";
@@ -38,11 +38,11 @@ int main(int argc, char *argv[])
     }
 
     //try to login
-    int isLogged = client.login(argv[1]);
+    int isLogged = client.login();
     if (isLogged != 0)
     {
         cout << "Login error, disconnect one device to continue";
-        client.closeConnection();
+        client.closeSocket();
         return 0;
     }
 

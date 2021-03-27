@@ -96,7 +96,6 @@ packet* BasicComm::readMessage(){
       return NULL;
     }
     if (n == 0){
-      cout << "am i going inside twice kappa" << endl;
       cout << "Connection lost" << endl;
       connectionInterrupted();
       return NULL;

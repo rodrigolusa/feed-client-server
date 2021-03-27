@@ -31,7 +31,7 @@ int Session::attemptLogin(){
       return 0;
     }
 
-void Session::closeConnection(){ //closes socket and removes session from vector
+void Session::connectionInterrupted(){ //closes socket and removes session from vector
   close(this->sckt);
   setActive(false);
   pthread_mutex_lock(&sessionvector_mutex);

@@ -75,6 +75,7 @@ int BasicComm::sendMessage(uint16_t cmd, char* data, uint16_t timestamp){
   n = write(this->sckt, serializedPkt, maxPacketSize);
   if (n < 0){
 	 cout << "Error sending message" << endl;
+   this->active = false;
    return -1;
   }
   this->seqnum++;
@@ -91,13 +92,14 @@ packet* BasicComm::readMessage(){
     n = read(this->sckt, serialized+dataRecv, maxPacketSize);
     if (n < 0){
       cout << "Error reading message" << endl;
-      closeConnection();
-      break;
+      connectionInterrupted();
+      return NULL;
     }
     if (n == 0){
+      cout << "am i going inside twice kappa" << endl;
       cout << "Connection lost" << endl;
-      closeConnection();
-      break;
+      connectionInterrupted();
+      return NULL;
     }
     dataRecv += n;
   }

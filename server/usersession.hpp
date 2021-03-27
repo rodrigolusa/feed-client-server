@@ -5,9 +5,10 @@ using namespace std;
 class Session: public BasicComm{
 private: //session info, add more as it is needed
   string username;
+//  List<receivedNotifications> notificationlist;
 public:
   int attemptLogin();
-  void closeConnection();
+  void connectionInterrupted();
   string getUsername();
 
   Session(int socket){

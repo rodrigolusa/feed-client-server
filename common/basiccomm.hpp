@@ -35,5 +35,5 @@ public:
   packet* readMessage();
 	void setActive(bool value);
 	bool isActive();
-	virtual void closeConnection() = 0;
+	virtual void connectionInterrupted() = 0;
 };

@@ -11,6 +11,12 @@ using namespace std;
 					cout << "ERROR opening socket";
 					return -1;
 				}
+				int value=1;
+
+	if (setsockopt(this->sckt, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value)) == -1) {
+	    perror("setsockopt");
+	    exit(1);
+	}
 		serv_addr.sin_family = AF_INET;
 		serv_addr.sin_port = htons(PORT);
 		serv_addr.sin_addr.s_addr = INADDR_ANY;

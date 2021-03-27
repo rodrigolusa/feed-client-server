@@ -15,12 +15,6 @@ void* ReceiveMessages(void* arg)
     w->news();
 }
 
-void* SendMessages(void* arg)
-{
-    MainWindow* w = static_cast<MainWindow *>(arg);
-    w->show();
-}
-
 int main(int argc, char *argv[])
 {
     if (argc < 4)
@@ -52,13 +46,14 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    cout << "Conectou";
+
     QApplication app(argc, argv);
     MainWindow w;
+    w.setComm(&client);
     w.setUserName(argv[1]);
 
-    //start thread to send messages.
-    pthread_t send_messages_thread;
-    pthread_create(&send_messages_thread, NULL, SendMessages, &w);
+    w.show();
 
     //start thread to receive messages.
     pthread_t receive_messages_thread;

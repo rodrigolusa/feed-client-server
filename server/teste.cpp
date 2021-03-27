@@ -1,45 +1,43 @@
 #include <iostream>
-#include "dataProfile.hpp"
 #include "profile.hpp"
-#include "data.hpp"
+#include "myDatabase.hpp"
 #include <list>
 
 int main(int argc, char *argv[])
 {
     //data geral
-    MyData dt;
+    MyDatabase db;
 
     //perfil @dez
-    Profile p10("@dez", 0);       
-    DataProfile dp10(p10);
-    dp10.AddFollower("@nove");
-    dp10.AddFollower("@oito");
+    Profile p10("@dez");       
+    p10.AddFollower("@nove");
+    p10.AddFollower("@oito");
     ReceivedNotification rn(1,1613618078,"olá",3,2);
-    dp10.AddReceivedNotification(rn);
+    p10.AddReceivedNotification(rn);
 
     //adiciona estrutura do perfil @dez
-    dt.Add(dp10);
+    db.AddProfile(p10);
 
     //perfil @onze
-    Profile p11("@onze", 0);       
-    DataProfile dp11(p11);
+    Profile p11("@onze");       
     PendingNotification pn11("@dez",1);
-    dp11.AddPendingNotification(pn11);
+    p11.AddPendingNotification(pn11);
 
     //adiciona estrutura do perfil @onze
-    dt.Add(dp11);
+    db.AddProfile(p11);
 
     //perfil @doze
-    Profile p12("@doze", 0);       
-    DataProfile dp12(p12);
+    Profile p12("@doze");       
     PendingNotification pn12("@dez",1);
-    dp12.AddPendingNotification(pn12);
+    p12.AddPendingNotification(pn12);
 
     //adiciona estrutura do perfil @onze
-    dt.Add(dp12);
+    db.AddProfile(p12);
 
-    list<DataProfile>::iterator it;
-    for(it = dt.data.begin(); it!= dt.data.end(); it++){
+    db.AddFollower("@doze", "@onze");
+
+    list<Profile>::iterator it;
+    for(it = db.data.begin(); it!= db.data.end(); it++){
         cout << "Perfil: " << it->id << endl;
         
         cout << "  Seguidores: " << endl;

@@ -18,11 +18,13 @@ public:
     ~MainWindow();
     void news();
     void setUserName(std::string user_name);
+    void setComm(ClientComms* new_comm);
 
 private slots:
     void on_send_message_clicked();
     void on_follow_clicked();
     void on_mensagem_textChanged();
+    void on_user_textChanged();
 
 private:
     Ui::MainWindow *ui;

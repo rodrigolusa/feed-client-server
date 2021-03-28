@@ -10,12 +10,13 @@ using namespace std;
 class Profile{
 public:
     string id;
-    list<Session> activeSessions;
+    int activeSessions;
     list<string> followers;
     list<string> following;
     list<ReceivedNotification> receivedNotifications;
     list<PendingNotification> pendingNotifications;
     
+    Profile();
     Profile(string i);
     void AddFollowing(string p);
     list<string> GetFollowing();

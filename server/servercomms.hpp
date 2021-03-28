@@ -9,10 +9,15 @@
 #include <netinet/in.h>
 #include <algorithm>
 #include <pthread.h>
+
 pthread_mutex_t sessionvector_mutex;
 
 #include "usersession.hpp"
 #include "usersession.cpp"
+#include "myDatabase.hpp"
+#include "profile.hpp"
+
+MyDatabase database;
 
 #define PORT 4000
 

@@ -3,6 +3,10 @@
 
 using namespace std;
 
+Profile::Profile(){
+    
+}
+
 Profile::Profile(string i){
     id = i;   
 };

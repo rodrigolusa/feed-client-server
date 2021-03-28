@@ -11,6 +11,10 @@ public:
 
     MyDatabase();
     void AddProfile(Profile d);
+    bool ExistsProfile(string id);
+    int GetActiveSessionsNumber(string id);
+    void AddSessionCount(string id);
+    void SubtractSessionCount(string id);
     void AddFollower(string profile, string follow);
     void AddFollowing(string profile, string follow);
     list<string> GetFollowers(string profile);
@@ -20,5 +24,7 @@ public:
     void AddReceivedNotifications(string profile, ReceivedNotification rn);
     void AddPendingNotifications(string profile, PendingNotification pn);
     void RemoveReceivedNotifications(string profile, int id);
-    void RemovePendingNotifications(string profile, string who, int id);   
+    void RemovePendingNotifications(string profile, string who, int id); 
+    void WriteDatabase(string file);
+    void ReadDatabase(string file);
 };

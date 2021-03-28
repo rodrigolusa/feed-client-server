@@ -4,34 +4,36 @@ using namespace std;
 
 #define PORT 4000
 
-	int 	serverComms::init(){
-		struct sockaddr_in serv_addr, cli_addr;
 
-		if ((this->sckt = socket(AF_INET, SOCK_STREAM, 0)) == -1){
-					cout << "ERROR opening socket";
-					return -1;
-				}
-				int value=1;
+int serverComms::init(){
+	struct sockaddr_in serv_addr, cli_addr;
+	
+	if ((this->sckt = socket(AF_INET, SOCK_STREAM, 0)) == -1){
+				cout << "ERROR opening socket";
+				return -1;
+			}
+			int value=1;
 
 	if (setsockopt(this->sckt, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value)) == -1) {
 	    perror("setsockopt");
 	    exit(1);
 	}
-		serv_addr.sin_family = AF_INET;
-		serv_addr.sin_port = htons(PORT);
-		serv_addr.sin_addr.s_addr = INADDR_ANY;
-		bzero(&(serv_addr.sin_zero), 8);
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_port = htons(PORT);
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	bzero(&(serv_addr.sin_zero), 8);
 
-		if (bind(this->sckt, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
-			cout << "ERROR on binding" << endl;
-			return -1;
-		}
-
-		listen(this->sckt, 5);
-
-		return 0;
+	if (bind(this->sckt, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
+		cout << "ERROR on binding" << endl;
+		return -1;
 	}
-int 	serverComms::acceptConnections(){
+
+	listen(this->sckt, 5);
+
+return 0;
+}
+
+int serverComms::acceptConnections(){
 		int newsockfd = 0;
 		struct sockaddr_in cli_addr;
 		socklen_t clilen;
@@ -40,17 +42,36 @@ int 	serverComms::acceptConnections(){
 			cout << "ERROR on accept";
 		cout << "Connection accepted" << endl;
 		return newsockfd;
-	}
+}
 
-void 	serverComms::closeSocket(){
+void serverComms::closeSocket(){
 			close(this->sckt);
-	}
+}
 
 
 
 void* ClientManagement(void* arg){
 	Session *user = *(Session**) &arg;
 	cout << "User " << user->getUsername() << " logged in\n";
+
+	//Usando base de dados do Rodrigo	
+	string userName = user->getUsername();
+
+	//Verifica se o perfil ja existe na nase de dados, senão o adiciona.
+	if(!database.ExistsProfile(userName)){
+		Profile prof(userName);
+		database.AddProfile(prof);
+		database.AddSessionCount(userName); //Apos adicionar o perfil ja incrementa o numero de sessoes ativas
+	}
+	else{
+		if(database.GetActiveSessionsNumber(userName) < 2){ //verifica se existe sessao disponivel, senão desativa o cliente (não sei se esta correto)
+			database.AddSessionCount(userName);
+		}
+		else{
+			user->setActive(false);
+		}
+	}
+
 	while(user->isActive()){
 
 		packet* pkt  = new packet;

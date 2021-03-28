@@ -12,6 +12,53 @@ void MyDatabase::AddProfile(Profile d){
     data.insert(it, d);
 }
 
+bool MyDatabase::ExistsProfile(string p){
+    list<Profile>::iterator it;
+    //cout << data.size() << endl;
+    if(data.size() > 0){
+        for(it = data.begin(); it!= data.end(); it++){
+            if(it->id == p){
+                return true;
+                break;
+            }
+        }
+    }
+    else{
+    return false;
+    }
+}
+
+int MyDatabase::GetActiveSessionsNumber(string id){
+    list<Profile>::iterator it;
+    for(it = data.begin(); it!= data.end(); it++){
+        if(it->id == id){
+            return it->activeSessions;
+            break;
+        }
+    }
+    return -1;
+}
+
+void MyDatabase::AddSessionCount(string id){
+    list<Profile>::iterator it;
+    for(it = data.begin(); it!= data.end(); it++){
+        if(it->id == id){
+            it->activeSessions++;
+            break;
+        }
+    }
+}
+
+void MyDatabase::SubtractSessionCount(string id){
+    list<Profile>::iterator it;
+    for(it = data.begin(); it!= data.end(); it++){
+        if(it->id == id){
+            it->activeSessions--;
+            break;
+        }
+    }
+}
+
 void MyDatabase::AddFollower(string profile, string follow){
     list<Profile>::iterator it;
     for(it = data.begin(); it!= data.end(); it++){
@@ -118,4 +165,12 @@ void MyDatabase::RemovePendingNotifications(string profile, string who, int id){
             break;
         }
     }
+}
+
+void MyDatabase::WriteDatabase(string file){
+    
+}
+
+void MyDatabase::ReadDatabase(string file){
+
 }

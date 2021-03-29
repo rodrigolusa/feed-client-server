@@ -1,5 +1,4 @@
 #include "../common/basiccomm.hpp"
-
 using namespace std;
 #pragma once
 

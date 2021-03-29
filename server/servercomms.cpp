@@ -61,6 +61,7 @@ void* ClientManagement(void* arg){
 		packet* pkt  = new packet;
 		pkt = user->readMessage();
 		if(user->isActive() == true){//if user crashed, connection is no longer active
+
 			ReceivedNotification rn;
 			PendingNotification pn;
 			switch (pkt->type)
@@ -82,12 +83,13 @@ void* ClientManagement(void* arg){
 				pn.profileId = name;
 				pn.notificationId = notificationId;
 				database.AddPendingNotifications(name, pn);
+				cout << "mensagem recebida foi " << pkt->_payload << getDate(pkt->timestamp) << endl;
 				break;
 			default:
 				user->sendMessage(SEND,(char*)pkt->_payload);
-				cout << "mensagem recebida foi " << pkt->_payload << endl;
 				break;
 			}
+
 		}
 	}
 	delete user;

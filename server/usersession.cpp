@@ -11,6 +11,7 @@ int Session::attemptLogin(){
   const char* name = new char[pkt->length];
   name = pkt->_payload;
   int count = 0;
+
   //Verifica se o perfil ja existe na nase de dados, senão o adiciona.
   if(!database.ExistsProfile(name)){
     Profile prof(name);

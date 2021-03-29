@@ -2,7 +2,7 @@
 
 using namespace std;
 
-ReceivedNotification::ReceivedNotification(int i, int t, string m, int s, int p){
+ReceivedNotification::ReceivedNotification(int i, char* t, string m, int s, int p){
     id = i;
     timestamp = t;
     message = m;

@@ -1,6 +1,9 @@
 #pragma once
+#include <vector>
+#include "profile.hpp"
+#include "myDatabase.hpp"
 #include "../common/basiccomm.hpp"
-#include "../common/basiccomm.cpp"
+#include "servercomms.hpp"
 using namespace std;
 class Session: public BasicComm{
 private: //session info, add more as it is needed
@@ -17,4 +20,3 @@ public:
     this->seqnum = 0;
   }
 };
-  vector<Session*> clientsessions;

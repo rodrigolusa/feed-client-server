@@ -4,10 +4,11 @@ using namespace std;
 
 #define PORT 4000
 
+MyDatabase database;
 
 int serverComms::init(){
 	struct sockaddr_in serv_addr, cli_addr;
-	
+
 	if ((this->sckt = socket(AF_INET, SOCK_STREAM, 0)) == -1){
 				cout << "ERROR opening socket";
 				return -1;
@@ -54,24 +55,6 @@ void* ClientManagement(void* arg){
 	Session *user = *(Session**) &arg;
 	cout << "User " << user->getUsername() << " logged in\n";
 
-	//Usando base de dados do Rodrigo	
-	string userName = user->getUsername();
-
-	//Verifica se o perfil ja existe na nase de dados, senão o adiciona.
-	if(!database.ExistsProfile(userName)){
-		Profile prof(userName);
-		database.AddProfile(prof);
-		database.AddSessionCount(userName); //Apos adicionar o perfil ja incrementa o numero de sessoes ativas
-	}
-	else{
-		if(database.GetActiveSessionsNumber(userName) < 2){ //verifica se existe sessao disponivel, senão desativa o cliente (não sei se esta correto)
-			database.AddSessionCount(userName);
-		}
-		else{
-			user->setActive(false);
-		}
-	}
-
 	while(user->isActive()){
 
 		packet* pkt  = new packet;
@@ -97,7 +80,7 @@ int main(int argc, char *argv[])
 	if(commManager.init() != 0)
 		exit(1);
 	int count = 0;
-	pthread_mutex_init(&sessionvector_mutex,NULL);
+	//pthread_mutex_init(&sessionvector_mutex,NULL);
 
 	while(true){
 		newsockfd = commManager.acceptConnections();

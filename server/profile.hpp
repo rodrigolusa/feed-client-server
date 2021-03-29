@@ -3,7 +3,7 @@
 #include <list>
 #include "receivedNotification.hpp"
 #include "pendingNotification.hpp"
-#include "usersession.hpp"
+
 
 using namespace std;
 
@@ -15,7 +15,7 @@ public:
     list<string> following;
     list<ReceivedNotification> receivedNotifications;
     list<PendingNotification> pendingNotifications;
-    
+
     Profile();
     Profile(string i);
     void AddFollowing(string p);

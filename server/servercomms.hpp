@@ -10,14 +10,12 @@
 #include <algorithm>
 #include <pthread.h>
 
-pthread_mutex_t sessionvector_mutex;
-
-#include "usersession.hpp"
-#include "usersession.cpp"
 #include "myDatabase.hpp"
+extern MyDatabase database;
 #include "profile.hpp"
+#include "usersession.hpp"
 
-MyDatabase database;
+
 
 #define PORT 4000
 

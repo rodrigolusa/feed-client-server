@@ -191,8 +191,32 @@ void MyDatabase::RemovePendingNotifications(string profile, string who, int id){
     }
 }
 
+//Metodo utilizado para teste
 void MyDatabase::WriteDatabase(string file){
-    
+    list<Profile>::iterator it;
+    for(it = data.begin(); it!= data.end(); it++){
+        cout << "Perfil: " << it->id << endl;
+        
+        cout << "  Seguidores: " << endl;
+        list<string>::iterator it_seguidores;
+        for(it_seguidores = it->followers.begin(); it_seguidores != it->followers.end(); it_seguidores++){
+            cout << "    " << *it_seguidores << endl;
+        }        
+        
+        cout << "  Notificações recebidas: " << endl;
+        list<ReceivedNotification>::iterator it_notifications;
+        for(it_notifications = it->receivedNotifications.begin(); it_notifications != it->receivedNotifications.end(); it_notifications++){
+            cout << "    " << it_notifications->id << ", " << it_notifications->timestamp << ", " << it_notifications->message << ", " << it_notifications->size << ", " << it_notifications->pendingFollowersToReceive << endl;
+        }
+
+        cout << "  Notificações pendentes para: " << endl;
+        list<PendingNotification>::iterator it_pending;
+        for(it_pending = it->pendingNotifications.begin(); it_pending != it->pendingNotifications.end(); it_pending++){
+            cout << "    " << it_pending->profileId << ", " << it_pending->profileId << endl;
+        }       
+
+        cout << endl; 
+    }    
 }
 
 void MyDatabase::ReadDatabase(string file){

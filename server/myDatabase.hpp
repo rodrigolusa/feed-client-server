@@ -23,8 +23,10 @@ public:
     list<PendingNotification> GetPendingNotifications(string profile);
     void AddReceivedNotifications(string profile, ReceivedNotification rn);
     void AddPendingNotifications(string profile, PendingNotification pn);
+    void AddPendingNotificationInFollower(string follower, PendingNotification pn);
     void RemoveReceivedNotifications(string profile, int id);
     void RemovePendingNotifications(string profile, string who, int id); 
     void WriteDatabase(string file);
     void ReadDatabase(string file);
+    int GetFollowersNumber(string profile);
 };

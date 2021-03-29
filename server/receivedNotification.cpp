@@ -9,3 +9,5 @@ ReceivedNotification::ReceivedNotification(int i, int t, string m, int s, int p)
     size = s;
     pendingFollowersToReceive = p;
 };
+ReceivedNotification::ReceivedNotification(){
+};

@@ -7,3 +7,5 @@ PendingNotification::PendingNotification(string p, int n){
     profileId = p;
     notificationId = n;
 };
+PendingNotification::PendingNotification(){
+};

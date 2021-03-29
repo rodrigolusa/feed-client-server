@@ -14,7 +14,8 @@
 extern MyDatabase database;
 #include "profile.hpp"
 #include "usersession.hpp"
-
+#include "receivedNotification.hpp"
+#include "pendingNotification.hpp"
 
 
 #define PORT 4000

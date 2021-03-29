@@ -5,6 +5,7 @@ using namespace std;
 #define PORT 4000
 
 MyDatabase database;
+int notificationId = 0;
 
 int serverComms::init(){
 	struct sockaddr_in serv_addr, cli_addr;
@@ -54,19 +55,39 @@ void serverComms::closeSocket(){
 void* ClientManagement(void* arg){
 	Session *user = *(Session**) &arg;
 	cout << "User " << user->getUsername() << " logged in\n";
-
+	string name = user->getUsername();
 	while(user->isActive()){
 
 		packet* pkt  = new packet;
 		pkt = user->readMessage();
 		if(user->isActive() == true){//if user crashed, connection is no longer active
-			if(pkt->type == LOGOUT)
+			ReceivedNotification rn;
+			PendingNotification pn;
+			switch (pkt->type)
+			{
+			case LOGOUT:
 				user->connectionInterrupted();
-			else{
-					user->sendMessage(SEND,(char*)pkt->_payload);
-					cout << "mensagem recebida foi " << pkt->_payload << endl;
+				break;
+			case FOLLOW:
+				database.AddFollowing(name, pkt->_payload);
+				database.AddFollower(pkt->_payload, name);
+				break;
+			case SEND:
+				rn.id = notificationId++;
+				rn.timestamp = pkt->timestamp;
+				rn.message = pkt->_payload;
+				rn.size = pkt->length;
+				rn.pendingFollowersToReceive = database.GetFollowersNumber(name);
+				database.AddReceivedNotifications(name, rn);
+				pn.profileId = name;
+				pn.notificationId = notificationId;
+				database.AddPendingNotifications(name, pn);
+				break;
+			default:
+				user->sendMessage(SEND,(char*)pkt->_payload);
+				cout << "mensagem recebida foi " << pkt->_payload << endl;
+				break;
 			}
-
 		}
 	}
 	delete user;

@@ -12,9 +12,18 @@ Profile::Profile(string i){
 };
 
 void Profile::AddFollower(string p){
+    bool exists = false;
     list<string>::iterator it;
-    it = followers.end();
-    followers.insert(it, p);
+    for(it = followers.begin(); it!= followers.end(); it++){
+        if(*it == p){
+            exists = true;
+            break;
+        }
+    }
+    if(!exists){
+        it = followers.end();
+        followers.insert(it, p);
+    }
 }
 
 list<string> Profile::GetFollowers(){
@@ -34,9 +43,18 @@ void Profile::RemoveFollower(string p){
 }
 
 void Profile::AddFollowing(string p){
+    bool exists = false;
     list<string>::iterator it;
-    it = following.end();
-    following.insert(it, p);
+    for(it = following.begin(); it!= following.end(); it++){
+        if(*it == p){
+            exists = true;
+            break;
+        }
+    }
+    if(!exists){
+        it = following.end();
+        following.insert(it, p);
+    }
 }
 
 list<string> Profile::GetFollowing(){
@@ -53,6 +71,10 @@ void Profile::RemoveFollowing(string p){
             break;
         }
     } 
+}
+
+int Profile::GetFollowersNumber(){
+    return followers.size();
 }
 
 void Profile::AddReceivedNotification(ReceivedNotification r){
@@ -78,8 +100,7 @@ list<PendingNotification> Profile::GetPendingNotification(){
 void Profile::RemoveReceivedNotification(int r){
     list<ReceivedNotification>::iterator it;
     it = receivedNotifications.end();
-    for(it = receivedNotifications.begin(); it!= receivedNotifications.end(); it++){
-        
+    for(it = receivedNotifications.begin(); it!= receivedNotifications.end(); it++){       
         if(it->id == r){
             receivedNotifications.erase(it);
             break;

@@ -28,6 +28,17 @@ bool MyDatabase::ExistsProfile(string p){
     }
 }
 
+int MyDatabase::GetFollowersNumber(string p){
+    list<Profile>::iterator it;
+    for(it = data.begin(); it!= data.end(); it++){
+        if(it->id == p){
+            return it->GetFollowersNumber();
+            break;
+        }
+    }
+    return 0;
+}
+
 int MyDatabase::GetActiveSessionsNumber(string id){
     list<Profile>::iterator it;
     for(it = data.begin(); it!= data.end(); it++){
@@ -141,6 +152,19 @@ void MyDatabase::AddPendingNotifications(string profile, PendingNotification pn)
     list<Profile>::iterator it;
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == profile){
+            list<string>::iterator it_f;
+            for(it_f = it->followers.begin(); it_f != it->followers.end(); it_f++){
+                AddPendingNotificationInFollower(*it_f, pn);
+            }
+            break;
+        }
+    }
+}
+
+void MyDatabase::AddPendingNotificationInFollower(string follower, PendingNotification pn){
+    list<Profile>::iterator it;
+    for(it = data.begin(); it!= data.end(); it++){
+        if(it->id == follower){
             it->AddPendingNotification(pn);
             break;
         }

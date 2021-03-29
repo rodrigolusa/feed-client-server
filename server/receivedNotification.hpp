@@ -12,4 +12,5 @@ class ReceivedNotification{
     int pendingFollowersToReceive;
 
     ReceivedNotification(int i, int t, string m, int s, int p);
+    ReceivedNotification();
 };

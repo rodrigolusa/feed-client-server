@@ -30,4 +30,5 @@ public:
     list<PendingNotification> GetPendingNotification();
     void RemoveReceivedNotification(int r);
     void RemovePendingNotification(string p, int i);
+    int GetFollowersNumber();
 };

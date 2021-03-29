@@ -9,4 +9,5 @@ class PendingNotification{
     int notificationId;
     
     PendingNotification(string p, int n);
+    PendingNotification();
 };

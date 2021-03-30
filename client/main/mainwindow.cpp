@@ -45,15 +45,19 @@ void MainWindow::news()
     while( true ) {
         packet* message = comm->readMessage();
 
-        if (message != NULL && message->type == CMDS::SEND) { // TODO arrumar verificação de tipo
-            QListWidgetItem *item = new QListWidgetItem(ui->mensagens_recebidas);
-            std::string mensagem = "_________________________________________________\n\nANONYMOUS\n\n";
-            mensagem += message->_payload;
-            mensagem += "\n";
-            item->setText(QString::fromUtf8(mensagem.data(), mensagem.size()));
-
-            QScrollBar *scroll = ui->mensagens_recebidas->verticalScrollBar();
-            scroll->setSliderPosition(scroll->maximum());
+        if (message != NULL && message->type == CMDS::SEND_NAME) {
+            packet* message2 = comm->readMessage();
+            if (message != NULL && message2->type == CMDS::SEND_DATA) {
+              QListWidgetItem *item = new QListWidgetItem(ui->mensagens_recebidas);
+              std::string mensagem = "_________________________________________________\n\n";
+              mensagem += message->_payload;
+              mensagem += "\n\n";
+              mensagem += message2->_payload;
+              mensagem += "\n";
+              item->setText(QString::fromUtf8(mensagem.data(), mensagem.size()));
+              QScrollBar *scroll = ui->mensagens_recebidas->verticalScrollBar();
+              scroll->setSliderPosition(scroll->maximum());
+            }
         }
     }
 }
@@ -62,7 +66,7 @@ void MainWindow::on_send_message_clicked()
 {
     QByteArray message = ui->area_mensagem->toPlainText().toLocal8Bit();
 
-    int recive = comm->sendMessage(CMDS::SEND, message.data());
+    int recive = comm->sendMessage(CMDS::SEND_UNNAMED, message.data());
 
     if (recive == 0) {
         ui->area_mensagem->clear();

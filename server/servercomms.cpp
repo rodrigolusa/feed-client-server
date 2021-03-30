@@ -76,7 +76,7 @@ void* ClientManagement(void* arg){
 				database.AddFollower(pkt->_payload, name);
 				cout << "pedido de follow " << pkt->_payload << getDate(pkt->timestamp) << endl;
 				break;
-			case SEND:
+			case SEND_UNNAMED:
 				rn.id = notificationId++;
 				rn.timestamp = pkt->timestamp;
 				rn.message = pkt->_payload;
@@ -87,10 +87,12 @@ void* ClientManagement(void* arg){
 				pn.notificationId = notificationId;
 				database.AddPendingNotifications(name, pn);
 				cout << "mensagem recebida foi " << pkt->_payload << getDate(pkt->timestamp) << endl;
+				user->sendMessage(SEND_NAME,(char*)name.c_str());
+				user->sendMessage(SEND_DATA,(char*)pkt->_payload);
 				break;
 			default:
 				//chamar a NotificationManager (por thread?)
-				user->sendMessage(SEND,(char*)pkt->_payload);
+				user->sendMessage(SEND_UNNAMED,(char*)pkt->_payload);
 				break;
 			}
 

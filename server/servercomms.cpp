@@ -72,6 +72,7 @@ void* ClientManagement(void* arg){
 			case FOLLOW:
 				database.AddFollowing(name, pkt->_payload);
 				database.AddFollower(pkt->_payload, name);
+				cout << "pedido de follow " << pkt->_payload << getDate(pkt->timestamp) << endl;
 				break;
 			case SEND:
 				rn.id = notificationId++;
@@ -97,22 +98,9 @@ void* ClientManagement(void* arg){
 	pthread_exit(NULL);
 }
 
-void* NotificationManager(string profile){
-	list<Profile>::iterator it;
-	for(it = database.data.begin(); it != database.data.end(); it ++){
-		list<PendingNotification>::iterator it_p;
-		for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
-			SendNotification(profile, database.GetReceivedNotification(it_p->profileId, it_p->notificationId));
-			it_p->readings++;
-		}
-	}
-	ClearNotifications(profile);
-}
-
 void SendNotification(string toProfile, ReceivedNotification rn){
 	//Colocar a rn no pkt pra enviar
 }
-
 
 void ClearNotifications(string profile){
 	list<Profile>::iterator it;
@@ -127,6 +115,18 @@ void ClearNotifications(string profile){
 			break;
 		}
 	}
+}
+
+void* NotificationManager(string profile){
+	list<Profile>::iterator it;
+	for(it = database.data.begin(); it != database.data.end(); it ++){
+		list<PendingNotification>::iterator it_p;
+		for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
+			SendNotification(profile, database.GetReceivedNotification(it_p->profileId, it_p->notificationId));
+			it_p->readings++;
+		}
+	}
+	ClearNotifications(profile);
 }
 
 int main(int argc, char *argv[])

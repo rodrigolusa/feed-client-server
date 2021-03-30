@@ -32,6 +32,7 @@ MainWindow::~MainWindow()
 void MainWindow::setUserName(std::string user_name)
 {
     title = user_name;
+    this->setWindowTitle( QString::fromUtf8( title.data(), title.size() ) );
 }
 
 void MainWindow::setComm(ClientComms* new_comm)

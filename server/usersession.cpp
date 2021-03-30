@@ -12,23 +12,20 @@ int Session::attemptLogin(){
   int count = 0;
   //Verifica se o perfil ja existe na nase de dados, senão o adiciona.
   if(!database.ExistsProfile(name)){
-    cout << "passei aqui" << endl;
     Profile prof(name);
     database.AddProfile(prof);
     database.AddSessionCount(name); //Apos adicionar o perfil ja incrementa o numero de sessoes ativas
   }
   else{
-    this->profile = database.getProfile(name);
-    pthread_mutex_lock(&(this->profile->logincontrol_mutex));//locks critical session so 2 clients can't login with same user simultaneously
+    Profile* prof = database.getProfile(name);
+    pthread_mutex_lock(&(prof->logincontrol_mutex));//locks critical session so 2 clients can't login with same user simultaneously
     if(database.GetActiveSessionsNumber(name) < 2){ //verifica se existe sessao disponivel, senão desativa o cliente (não sei se esta correto)
       database.AddSessionCount(name);
-    cout << database.GetActiveSessionsNumber(name)  << endl;
-    pthread_mutex_unlock(&(this->profile->logincontrol_mutex));
+    pthread_mutex_unlock(&(prof->logincontrol_mutex));
     }
     else{
       sendMessage(ERROR);
-      cout << "passei aqui 3" << endl;
-      pthread_mutex_unlock(&(this->profile->logincontrol_mutex));
+      pthread_mutex_unlock(&(prof->logincontrol_mutex));
       setActive(false);
       return -1;
       }
@@ -44,9 +41,10 @@ int Session::attemptLogin(){
 void Session::connectionInterrupted(){ //closes socket and removes session from vector
   close(this->sckt);
   setActive(false);
-  pthread_mutex_lock(&(this->profile->logincontrol_mutex));//locks critical session so 2 clients can't login with same user simultaneously
+  Profile* prof = database.getProfile(this->username);
+  pthread_mutex_lock(&(prof->logincontrol_mutex));//locks critical session so 2 clients can't login with same user simultaneously
   database.SubtractSessionCount(this->username);
-  pthread_mutex_unlock(&(this->profile->logincontrol_mutex));
+  pthread_mutex_unlock(&(prof->logincontrol_mutex));
 }
 
 

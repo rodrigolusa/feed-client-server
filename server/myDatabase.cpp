@@ -10,6 +10,8 @@ void MyDatabase::AddProfile(Profile d){
     list<Profile>::iterator it;
     it = data.end();
     data.insert(it, d);
+    if(!init)
+      WriteProfile(d.id);
 }
 
 Profile* MyDatabase::getProfile(string p){
@@ -100,6 +102,8 @@ void MyDatabase::AddFollowing(string profile, string follow){
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == profile){
             it->AddFollowing(follow);
+            if(!init)
+              WriteFollower(follow,profile);
             break;
         }
     }
@@ -254,4 +258,50 @@ void MyDatabase::WriteDatabase(string file){
 
 void MyDatabase::ReadDatabase(string file){
 
+}
+
+void MyDatabase::WriteProfile(string id){
+  string dataToWrite(id);
+  dataToWrite.append(" ");
+  f_profiles << dataToWrite.c_str();
+  f_profiles.flush();
+}
+void MyDatabase::initProfiles(){
+  string profile;
+  while(f_profiles >> profile){
+    AddProfile(profile);
+  }
+}
+
+void MyDatabase::initFollowers(){
+  string follower;
+  string followed;
+
+  while(f_followers >> follower){
+    f_followers >> followed;
+    AddFollowing(follower,followed);
+    AddFollower(followed,follower);
+  }
+}
+void MyDatabase::WriteFollower(string follower, string followed){
+  string dataToWrite(follower);
+  dataToWrite.append(" ");
+  dataToWrite.append(followed);
+  dataToWrite.append(" ");
+  f_followers << dataToWrite;
+  f_followers.flush();
+}
+
+void MyDatabase::initDatabase(){
+  this->init = true;
+  f_profiles.open("profiles.txt",fstream::in);//opens for reading and creating database
+  f_followers.open("followers.txt",fstream::in);
+  initProfiles();
+  initFollowers();
+  f_profiles.close();
+  f_followers.close();
+  f_profiles.open("profiles.txt",fstream::app); //opens for appending at the end of file
+  f_followers.open("followers.txt",fstream::app);
+  this->init = false;
+  WriteDatabase("");
 }

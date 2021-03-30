@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <list>
 #include "profile.hpp"
 #include <pthread.h>
@@ -10,6 +11,9 @@ using namespace std;
 class MyDatabase{
 public:
     list<Profile> data;
+    fstream f_followers;
+    fstream f_profiles;
+    bool init;
 
     MyDatabase();
     void AddProfile(Profile d);
@@ -35,4 +39,12 @@ public:
     int GetFollowersNumber(string profile);
     int GetReadings(string profile);
     void IncrementReading(string profile);
+    void WriteProfile(string id);
+    void initProfiles();
+    void initFollowers();
+    void WriteFollower(string follower, string followed);
+    void initDatabase();
+
+
+
 };

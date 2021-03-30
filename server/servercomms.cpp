@@ -86,6 +86,7 @@ void* ClientManagement(void* arg){
 				cout << "mensagem recebida foi " << pkt->_payload << getDate(pkt->timestamp) << endl;
 				break;
 			default:
+				//chamar a NotificationManager (por thread?)
 				user->sendMessage(SEND,(char*)pkt->_payload);
 				break;
 			}
@@ -95,6 +96,39 @@ void* ClientManagement(void* arg){
 	delete user;
 	pthread_exit(NULL);
 }
+
+void* NotificationManager(string profile){
+	list<Profile>::iterator it;
+	for(it = database.data.begin(); it != database.data.end(); it ++){
+		list<PendingNotification>::iterator it_p;
+		for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
+			SendNotification(profile, database.GetReceivedNotification(it_p->profileId, it_p->notificationId));
+			it_p->readings++;
+		}
+	}
+	ClearNotifications(profile);
+}
+
+void SendNotification(string toProfile, ReceivedNotification rn){
+	//Colocar a rn no pkt pra enviar
+}
+
+
+void ClearNotifications(string profile){
+	list<Profile>::iterator it;
+	for(it = database.data.begin(); it != database.data.end(); it ++){
+		if(it->id == profile){
+			list<PendingNotification>::iterator it_p;
+			for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
+				if(it_p->readings == 2){
+					it->RemovePendingNotification(it_p->profileId, it_p->notificationId);
+				}
+			}
+			break;
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 

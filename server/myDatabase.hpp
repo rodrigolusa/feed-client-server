@@ -24,6 +24,7 @@ public:
     list<string> GetFollowing(string profile);
     list<ReceivedNotification> GetReceivedNotifications(string profile);
     list<PendingNotification> GetPendingNotifications(string profile);
+    ReceivedNotification GetReceivedNotification(string profile, int id);
     void AddReceivedNotifications(string profile, ReceivedNotification rn);
     void AddPendingNotifications(string profile, PendingNotification pn);
     void AddPendingNotificationInFollower(string follower, PendingNotification pn);
@@ -32,4 +33,6 @@ public:
     void WriteDatabase(string file);
     void ReadDatabase(string file);
     int GetFollowersNumber(string profile);
+    int GetReadings(string profile);
+    void IncrementReading(string profile);
 };

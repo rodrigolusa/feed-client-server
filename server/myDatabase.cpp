@@ -129,6 +129,24 @@ list<string> MyDatabase::GetFollowing(string profile){
     return ret;
 }
 
+ReceivedNotification MyDatabase::GetReceivedNotification(string profile, int id){
+    ReceivedNotification ret;
+    list<Profile>::iterator it;
+    for(it = data.begin(); it!= data.end(); it++){
+        if(it->id == profile){
+            list<ReceivedNotification>::iterator it_r;
+            for(it_r = it->receivedNotifications.begin(); it_r != it->receivedNotifications.end(); it_r++){
+                if(it_r->id == id){
+                    ret = *it_r;
+                    break;
+                }
+            }
+            break;
+        }
+    }
+    return ret;
+}
+
 list<ReceivedNotification> MyDatabase::GetReceivedNotifications(string profile){
     list<ReceivedNotification> ret;
     list<Profile>::iterator it;

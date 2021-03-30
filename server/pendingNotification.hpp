@@ -7,6 +7,7 @@ class PendingNotification{
     public:
     string profileId;
     int notificationId;
+    int readings;
     
     PendingNotification(string p, int n);
     PendingNotification();

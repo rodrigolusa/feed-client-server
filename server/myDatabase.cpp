@@ -12,6 +12,21 @@ void MyDatabase::AddProfile(Profile d){
     data.insert(it, d);
 }
 
+Profile* MyDatabase::getProfile(string p){
+  list<Profile>::iterator it;
+  if(data.size() > 0){
+      for(it = data.begin(); it!= data.end(); it++){
+          if(it->id == p){
+              return &(*it);
+              break;
+          }
+      }
+  }
+  else{
+  return NULL;
+  }
+}
+
 bool MyDatabase::ExistsProfile(string p){
     list<Profile>::iterator it;
     //cout << data.size() << endl;
@@ -196,13 +211,13 @@ void MyDatabase::WriteDatabase(string file){
     list<Profile>::iterator it;
     for(it = data.begin(); it!= data.end(); it++){
         cout << "Perfil: " << it->id << endl;
-        
+
         cout << "  Seguidores: " << endl;
         list<string>::iterator it_seguidores;
         for(it_seguidores = it->followers.begin(); it_seguidores != it->followers.end(); it_seguidores++){
             cout << "    " << *it_seguidores << endl;
-        }        
-        
+        }
+
         cout << "  Notificações recebidas: " << endl;
         list<ReceivedNotification>::iterator it_notifications;
         for(it_notifications = it->receivedNotifications.begin(); it_notifications != it->receivedNotifications.end(); it_notifications++){
@@ -213,10 +228,10 @@ void MyDatabase::WriteDatabase(string file){
         list<PendingNotification>::iterator it_pending;
         for(it_pending = it->pendingNotifications.begin(); it_pending != it->pendingNotifications.end(); it_pending++){
             cout << "    " << it_pending->profileId << ", " << it_pending->profileId << endl;
-        }       
+        }
 
-        cout << endl; 
-    }    
+        cout << endl;
+    }
 }
 
 void MyDatabase::ReadDatabase(string file){

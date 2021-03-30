@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 	if(commManager.init() != 0)
 		exit(1);
 	int count = 0;
-	//pthread_mutex_init(&sessionvector_mutex,NULL);
+	
 
 	while(true){
 		newsockfd = commManager.acceptConnections();

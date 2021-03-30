@@ -4,11 +4,12 @@
 using namespace std;
 
 Profile::Profile(){
-    
+  pthread_mutex_init(&logincontrol_mutex,NULL); 
 }
 
 Profile::Profile(string i){
-    id = i;   
+    id = i;
+    pthread_mutex_init(&logincontrol_mutex,NULL);
 };
 
 void Profile::AddFollower(string p){
@@ -30,16 +31,16 @@ list<string> Profile::GetFollowers(){
     return followers;
 }
 
-void Profile::RemoveFollower(string p){  
+void Profile::RemoveFollower(string p){
     list<string>::iterator it;
     it = followers.end();
     for(it = followers.begin(); it!= followers.end(); it++){
-        
+
         if(*it == p){
             followers.erase(it);
             break;
         }
-    } 
+    }
 }
 
 void Profile::AddFollowing(string p){
@@ -61,16 +62,16 @@ list<string> Profile::GetFollowing(){
     return following;
 }
 
-void Profile::RemoveFollowing(string p){  
+void Profile::RemoveFollowing(string p){
     list<string>::iterator it;
     it = following.end();
     for(it = following.begin(); it!= following.end(); it++){
-        
+
         if(*it == p){
             following.erase(it);
             break;
         }
-    } 
+    }
 }
 
 int Profile::GetFollowersNumber(){
@@ -100,7 +101,7 @@ list<PendingNotification> Profile::GetPendingNotification(){
 void Profile::RemoveReceivedNotification(int r){
     list<ReceivedNotification>::iterator it;
     it = receivedNotifications.end();
-    for(it = receivedNotifications.begin(); it!= receivedNotifications.end(); it++){       
+    for(it = receivedNotifications.begin(); it!= receivedNotifications.end(); it++){
         if(it->id == r){
             receivedNotifications.erase(it);
             break;
@@ -112,10 +113,10 @@ void Profile::RemovePendingNotification(string p, int i){
     list<PendingNotification>::iterator it;
     it = pendingNotifications.end();
     for(it = pendingNotifications.begin(); it!= pendingNotifications.end(); it++){
-        
+
         if(it->profileId == p && it->notificationId == i){
             pendingNotifications.erase(it);
             break;
         }
-    } 
+    }
 }

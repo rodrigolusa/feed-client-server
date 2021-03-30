@@ -8,7 +8,7 @@ using namespace std;
 class Session: public BasicComm{
 private: //session info, add more as it is needed
   string username;
-//  List<receivedNotifications> notificationlist;
+  Profile* profile;
 public:
   int attemptLogin();
   void connectionInterrupted();

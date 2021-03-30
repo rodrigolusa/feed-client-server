@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <list>
+#include <pthread.h>
 #include "receivedNotification.hpp"
 #include "pendingNotification.hpp"
 
@@ -10,6 +11,7 @@ using namespace std;
 class Profile{
 public:
     string id;
+    pthread_mutex_t logincontrol_mutex;
     int activeSessions;
     list<string> followers;
     list<string> following;

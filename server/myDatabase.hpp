@@ -3,6 +3,7 @@
 #include <iostream>
 #include <list>
 #include "profile.hpp"
+#include <pthread.h>
 
 using namespace std;
 
@@ -12,6 +13,7 @@ public:
 
     MyDatabase();
     void AddProfile(Profile d);
+    Profile* getProfile(string name);
     bool ExistsProfile(string id);
     int GetActiveSessionsNumber(string id);
     void AddSessionCount(string id);
@@ -26,7 +28,7 @@ public:
     void AddPendingNotifications(string profile, PendingNotification pn);
     void AddPendingNotificationInFollower(string follower, PendingNotification pn);
     void RemoveReceivedNotifications(string profile, int id);
-    void RemovePendingNotifications(string profile, string who, int id); 
+    void RemovePendingNotifications(string profile, string who, int id);
     void WriteDatabase(string file);
     void ReadDatabase(string file);
     int GetFollowersNumber(string profile);

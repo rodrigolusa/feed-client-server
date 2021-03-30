@@ -30,6 +30,8 @@ int serverComms::init(){
 		return -1;
 	}
 
+	database.initDatabase();
+
 	listen(this->sckt, 5);
 
 return 0;
@@ -137,7 +139,7 @@ int main(int argc, char *argv[])
 	if(commManager.init() != 0)
 		exit(1);
 	int count = 0;
-	
+
 
 	while(true){
 		newsockfd = commManager.acceptConnections();

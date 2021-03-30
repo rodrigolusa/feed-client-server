@@ -103,7 +103,7 @@ void MyDatabase::AddFollowing(string profile, string follow){
         if(it->id == profile){
             it->AddFollowing(follow);
             if(!init)
-              WriteFollower(follow,profile);
+              WriteFollower(profile,follow);
             break;
         }
     }
@@ -203,6 +203,7 @@ void MyDatabase::AddPendingNotificationInFollower(string follower, PendingNotifi
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == follower){
             it->AddPendingNotification(pn);
+            pthread_cond_broadcast(&(it->not_empty));
             break;
         }
     }

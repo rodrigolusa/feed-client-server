@@ -9,26 +9,10 @@
 #include <netinet/in.h>
 #include <algorithm>
 #include <pthread.h>
-
-#include "myDatabase.hpp"
-extern MyDatabase database;
-#include "profile.hpp"
-#include "usersession.hpp"
-#include "notificationManager.hpp"
 #include "receivedNotification.hpp"
 #include "pendingNotification.hpp"
-
-
-#define PORT 4000
-
-using namespace std;
-
-
-class serverComms{
-private:
-	int sckt;
-public:
-	int init();
-	int acceptConnections();
-	void closeSocket();
-};
+#include "usersession.hpp"
+void SendNotification(string toProfile, ReceivedNotification rn);
+void ClearNotifications(string profile);
+void* NotificationConsumer(void* arg);
+void* NotificationProducer(void* arg);

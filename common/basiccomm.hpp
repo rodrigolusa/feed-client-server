@@ -36,10 +36,11 @@ protected:
   int sckt;
   uint16_t seqnum;
 public:
-  int sendMessage(uint16_t cmd,  char* data = NULL);
+  int sendMessage(uint16_t cmd,  char* data = NULL, char* timestamp = NULL);
   packet* readMessage();
 	void setActive(bool value);
 	bool isActive();
+	int getSocket();
 	virtual void connectionInterrupted() = 0;
 };
 

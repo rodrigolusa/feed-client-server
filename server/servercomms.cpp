@@ -5,7 +5,6 @@ using namespace std;
 #define PORT 4000
 
 MyDatabase database;
-int notificationId = 0;
 
 int serverComms::init(){
 	struct sockaddr_in serv_addr, cli_addr;
@@ -53,86 +52,6 @@ void serverComms::closeSocket(){
 }
 
 
-
-void* ClientManagement(void* arg){
-	Session *user = *(Session**) &arg;
-	cout << "User " << user->getUsername() << " logged in\n";
-	string name = user->getUsername();
-	while(user->isActive()){
-
-		packet* pkt  = new packet;
-		pkt = user->readMessage();
-		if(user->isActive() == true){//if user crashed, connection is no longer active
-
-			ReceivedNotification rn;
-			PendingNotification pn;
-			switch (pkt->type)
-			{
-			case LOGOUT:
-				user->connectionInterrupted();
-				break;
-			case FOLLOW:
-				database.AddFollowing(name, pkt->_payload);
-				database.AddFollower(pkt->_payload, name);
-				cout << "pedido de follow " << pkt->_payload << getDate(pkt->timestamp) << endl;
-				break;
-			case SEND_UNNAMED:
-				rn.id = notificationId++;
-				rn.timestamp = pkt->timestamp;
-				rn.message = pkt->_payload;
-				rn.size = pkt->length;
-				rn.pendingFollowersToReceive = database.GetFollowersNumber(name);
-				database.AddReceivedNotifications(name, rn);
-				pn.profileId = name;
-				pn.notificationId = notificationId;
-				database.AddPendingNotifications(name, pn);
-				cout << "mensagem recebida foi " << pkt->_payload << getDate(pkt->timestamp) << endl;
-				user->sendMessage(SEND_NAME,(char*)name.c_str());
-				user->sendMessage(SEND_DATA,(char*)pkt->_payload);
-				break;
-			default:
-				//chamar a NotificationManager (por thread?)
-				user->sendMessage(SEND_UNNAMED,(char*)pkt->_payload);
-				break;
-			}
-
-		}
-	}
-	delete user;
-	pthread_exit(NULL);
-}
-
-void SendNotification(string toProfile, ReceivedNotification rn){
-	//Colocar a rn no pkt pra enviar
-}
-
-void ClearNotifications(string profile){
-	list<Profile>::iterator it;
-	for(it = database.data.begin(); it != database.data.end(); it ++){
-		if(it->id == profile){
-			list<PendingNotification>::iterator it_p;
-			for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
-				if(it_p->readings == 2){
-					it->RemovePendingNotification(it_p->profileId, it_p->notificationId);
-				}
-			}
-			break;
-		}
-	}
-}
-
-void* NotificationManager(string profile){
-	list<Profile>::iterator it;
-	for(it = database.data.begin(); it != database.data.end(); it ++){
-		list<PendingNotification>::iterator it_p;
-		for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
-			SendNotification(profile, database.GetReceivedNotification(it_p->profileId, it_p->notificationId));
-			it_p->readings++;
-		}
-	}
-	ClearNotifications(profile);
-}
-
 int main(int argc, char *argv[])
 {
 
@@ -151,7 +70,7 @@ int main(int argc, char *argv[])
 		}
 		else{
 			pthread_t new_thread;
-			pthread_create(&new_thread, NULL, ClientManagement, new_session);
+			pthread_create(&new_thread, NULL, NotificationProducer, new_session);
 			}
 
 		}

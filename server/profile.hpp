@@ -12,6 +12,9 @@ class Profile{
 public:
     string id;
     pthread_mutex_t logincontrol_mutex;
+    pthread_mutex_t receivenotification_mutex;
+    pthread_mutex_t pendingnotification_mutex;
+    pthread_cond_t not_empty;
     int activeSessions;
     list<string> followers;
     list<string> following;

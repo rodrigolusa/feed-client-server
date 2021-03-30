@@ -73,7 +73,7 @@ packet* BasicComm::deserializeData(char* serializedData){
 }
 
 
-int BasicComm::sendMessage(uint16_t cmd, char* data){
+int BasicComm::sendMessage(uint16_t cmd, char* data, char* timestamp){
   int n;
   int msgtype = cmd;
 
@@ -84,8 +84,12 @@ int BasicComm::sendMessage(uint16_t cmd, char* data){
     pkt->length = (strlen(data)) + 1;
   else
     pkt->length = 0;
+  if(timestamp != NULL)
+    pkt->timestamp = timestamp;
+  else {
   char* timestamp = new char[TIMESTAMP_SIZE];
   pkt->timestamp = getTimestamp(timestamp);
+  }
   pkt->_payload = data;
   char* serializedPkt = serializeData(pkt);
   n = write(this->sckt, serializedPkt, maxPacketSize);
@@ -127,5 +131,9 @@ bool BasicComm::isActive(){
 }
 void BasicComm::setActive(bool value){
   this->active = value;
+}
+
+int BasicComm::getSocket(){
+  return this->sckt;
 }
 //int BasicComm::ping(){}

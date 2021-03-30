@@ -38,6 +38,16 @@ int Session::attemptLogin(){
       return 0;
     }
 
+void Session::flushsendingQueue(){
+  list<QueuedMessage>::iterator it;
+  for(it = sendingQueue.begin(); it!= sendingQueue.end(); it++){
+    cout << "cheguei no flush de sending";
+    sendMessage(SEND_NAME,it->username, it->timestamp);
+    sendMessage(SEND_DATA,it->message, it->timestamp);
+  }
+}
+
+
 void Session::connectionInterrupted(){ //closes socket and removes session from vector
   close(this->sckt);
   setActive(false);

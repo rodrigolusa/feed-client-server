@@ -1,16 +1,20 @@
 #include "profile.hpp"
-
+#include <iostream>
 
 using namespace std;
 
 Profile::Profile(){
   pthread_mutex_init(&logincontrol_mutex,NULL);
+  pthread_mutex_init(&pendingnotification_mutex,NULL);
+  pthread_mutex_init(&receivenotification_mutex,NULL);
 }
 
 Profile::Profile(string i){
     id = i;
     activeSessions = 0;
     pthread_mutex_init(&logincontrol_mutex,NULL);
+    pthread_mutex_init(&pendingnotification_mutex,NULL);
+    pthread_mutex_init(&receivenotification_mutex,NULL);
 };
 
 void Profile::AddFollower(string p){
@@ -82,6 +86,7 @@ int Profile::GetFollowersNumber(){
 void Profile::AddReceivedNotification(ReceivedNotification r){
     list<ReceivedNotification>::iterator it;
     it = receivedNotifications.end();
+    cout << "passei no add received do perfl" << endl;
     receivedNotifications.insert(it, r);
 }
 

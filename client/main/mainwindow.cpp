@@ -66,13 +66,15 @@ void MainWindow::on_send_message_clicked()
 {
     QByteArray message = ui->area_mensagem->toPlainText().toLocal8Bit();
 
-    int recive = comm->sendMessage(CMDS::SEND_UNNAMED, message.data());
+    if (!message.trimmed().isEmpty()) {
+        int recive = comm->sendMessage(CMDS::SEND_UNNAMED, message.data());
 
-    if (recive == 0) {
-        ui->area_mensagem->clear();
-        ui->area_mensagem->setFocus();
-    } else {
-        // TODO dialog de erro
+        if (recive == 0) {
+            ui->area_mensagem->clear();
+            ui->area_mensagem->setFocus();
+        } else {
+            // TODO dialog de erro
+        }
     }
 }
 
@@ -80,13 +82,15 @@ void MainWindow::on_follow_clicked()
 {
     QByteArray message = ui->perfil->toPlainText().toLocal8Bit();
 
-    int recive = comm->sendMessage(CMDS::FOLLOW, message.data());
+    if (!message.trimmed().isEmpty()) {
+        int recive = comm->sendMessage(CMDS::FOLLOW, message.data());
 
-    if (recive == 0) {
-        ui->perfil->clear();
-        ui->perfil->setFocus();
-    } else {
-        // TODO dialog de erro
+        if (recive == 0) {
+            ui->perfil->clear();
+            ui->perfil->setFocus();
+        } else {
+            // TODO dialog de erro
+        }
     }
 }
 

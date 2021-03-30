@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+server/*.txt
+*.pro.user
+.qmake.stash

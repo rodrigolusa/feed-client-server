@@ -2,7 +2,7 @@ run-server: servidor
 	cd server ; ./servidor
 
 servidor:
-	cd server ; g++ -std=c++11 servercomms.cpp myDatabase.cpp profile.cpp receivedNotification.cpp pendingNotification.cpp usersession.cpp ../common/basiccomm.cpp -o servidor -lpthread
+	cd server ; g++ -std=c++11 servercomms.cpp notificationManager.cpp myDatabase.cpp profile.cpp receivedNotification.cpp pendingNotification.cpp usersession.cpp ../common/basiccomm.cpp -o servidor -lpthread
 
 cliente:
 	cd bin ; make

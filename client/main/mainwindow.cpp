@@ -3,16 +3,18 @@
 #include <QListWidgetItem>
 #include <QScrollBar>
 #include <QByteArray>
+#include <QCloseEvent>
+#include <QMessageBox>
 
 #define MAX_TEXT_LENGTH 128
 
-MainWindow::MainWindow(QWidget *parent, std::string title) :
+MainWindow::MainWindow(QWidget *parent, std::string userName) :
     QMainWindow( parent ),
-    title( title ),
+    title( QString::fromUtf8( userName.data(), userName.size() ) ),
     comm( new ClientComms() ),
     ui( new Ui::MainWindow )
 {
-    this->setWindowTitle( QString::fromUtf8( title.data(), title.size() ) );
+    this->setWindowTitle( title );
     ui->setupUi(this);
     QListWidgetItem* item = new QListWidgetItem(ui->mensagens_recebidas);
     item->setText("Mensagens Recebidas");
@@ -29,10 +31,10 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::setUserName(std::string user_name)
+void MainWindow::setUserName(std::string userName)
 {
-    title = user_name;
-    this->setWindowTitle( QString::fromUtf8( title.data(), title.size() ) );
+    title = QString::fromUtf8( userName.data(), userName.size() );
+    this->setWindowTitle( title );
 }
 
 void MainWindow::setComm(ClientComms* new_comm)
@@ -53,6 +55,8 @@ void MainWindow::news()
               mensagem += message->_payload;
               mensagem += "\n\n";
               mensagem += message2->_payload;
+              mensagem += "\n                                                                 ";
+              mensagem += getDate(getTimestamp(message->timestamp));
               mensagem += "\n";
               item->setText(QString::fromUtf8(mensagem.data(), mensagem.size()));
               QScrollBar *scroll = ui->mensagens_recebidas->verticalScrollBar();
@@ -73,7 +77,7 @@ void MainWindow::on_send_message_clicked()
             ui->area_mensagem->clear();
             ui->area_mensagem->setFocus();
         } else {
-            // TODO dialog de erro
+            QMessageBox::warning( this, title, "Erro ao tentar dar tweetar.");
         }
     }
 }
@@ -82,14 +86,14 @@ void MainWindow::on_follow_clicked()
 {
     QByteArray message = ui->perfil->toPlainText().toLocal8Bit();
 
-    if (!message.trimmed().isEmpty()) {
+    if (!message.trimmed().isEmpty() && QString::compare(message, title, Qt::CaseInsensitive) != 0) {
         int recive = comm->sendMessage(CMDS::FOLLOW, message.data());
 
         if (recive == 0) {
             ui->perfil->clear();
             ui->perfil->setFocus();
         } else {
-            // TODO dialog de erro
+            QMessageBox::warning( this, title, "Erro ao tentar dar follow.");
         }
     }
 }
@@ -127,5 +131,18 @@ void MainWindow::on_user_textChanged()
         QTextCursor cursor(ui->perfil->textCursor());
         cursor.movePosition(QTextCursor::End, QTextCursor::MoveAnchor);
         ui->perfil->setTextCursor(cursor);
+    }
+}
+
+void MainWindow::closeEvent(QCloseEvent *event)
+{
+    QMessageBox::StandardButton resBtn = QMessageBox::question( this, title,
+                                                                QString("Tem certeza que deseja sair?"),
+                                                                QMessageBox::No | QMessageBox::Yes);
+    if (resBtn != QMessageBox::Yes) {
+        event->ignore();
+    } else {
+        comm->connectionInterrupted();
+        event->accept();
     }
 }

@@ -28,12 +28,14 @@ void* NotificationConsumer(void* arg){
         pthread_cond_wait(&(prof->not_empty),&(prof->pendingnotification_mutex));
       list<PendingNotification>::iterator it_p;
       for(it_p = prof->pendingNotifications.begin(); it_p != prof->pendingNotifications.end(); it_p++){
+        if(it_p->last_read_by == user->getSocket()){
         QueuedMessage msg;
         ReceivedNotification notif = database.GetReceivedNotification(it_p->profileId,it_p->notificationId);
         msg.username = (char*)it_p->profileId.c_str();
         msg.message = (char*)notif.message.c_str();
         msg.timestamp = notif.timestamp;
         user->sendingQueue.push_back(msg);
+        }
       }
       ClearNotifications(user->getUsername(),user->getSocket());
       pthread_mutex_unlock(&(prof->pendingnotification_mutex));

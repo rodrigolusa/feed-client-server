@@ -86,11 +86,15 @@ int Profile::GetFollowersNumber(){
     return followers.size();
 }
 
-void Profile::AddReceivedNotification(ReceivedNotification r){
+bool Profile::AddReceivedNotification(ReceivedNotification r){
+    if(pthread_mutex_trylock(&(this->receivenotification_mutex)) == 0){
     list<ReceivedNotification>::iterator it;
     it = receivedNotifications.end();
-    cout << "passei no add received do perfl" << endl;
     receivedNotifications.insert(it, r);
+    pthread_mutex_unlock(&(this->receivenotification_mutex));
+    return true;
+  }
+  else return false;
 }
 
 void Profile::AddPendingNotification(PendingNotification p){

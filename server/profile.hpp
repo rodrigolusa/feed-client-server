@@ -29,7 +29,7 @@ public:
     void AddFollower(string p);
     list<string> GetFollowers();
     void RemoveFollower(string p);
-    void AddReceivedNotification(ReceivedNotification r);
+    bool AddReceivedNotification(ReceivedNotification r);
     void AddPendingNotification(PendingNotification p);
     list<ReceivedNotification> GetReceivedNotifications();
     list<PendingNotification> GetPendingNotification();

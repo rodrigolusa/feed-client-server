@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     }
 
     cout << "Conectou";
-
+    client.setActive(true);
     QApplication app(argc, argv);
     MainWindow w;
     w.setComm(&client);

@@ -9,4 +9,5 @@ PendingNotification::PendingNotification(string p, int n){
     last_read_by = -1;
 };
 PendingNotification::PendingNotification(){
+  last_read_by = -1;
 };

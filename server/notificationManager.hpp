@@ -16,3 +16,4 @@ void SendNotification(string toProfile, ReceivedNotification rn);
 void ClearNotifications(string profile);
 void* NotificationConsumer(void* arg);
 void* NotificationProducer(void* arg);
+bool islistEmptyForClient(list<PendingNotification> notf_list, int socket);

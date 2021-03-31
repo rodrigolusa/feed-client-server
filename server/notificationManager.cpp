@@ -7,16 +7,33 @@ void ClearNotifications(string profile, int socket){
     if(it->id == profile){
       list<PendingNotification>::iterator it_p;
       for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
-        if(it_p->last_read_by != -1 && it_p->last_read_by != socket){
-          it->RemovePendingNotification(it_p->profileId, it_p->notificationId);
-        }
+        if(database.GetActiveSessionsNumber(profile) < 2){ //if we only have one session active, we can remove the notification
+          if(it_p->last_read_by != -1 && it_p->last_read_by != socket){
+            it->RemovePendingNotification(it_p->profileId, it_p->notificationId);
+          }
+          else
+            it_p->last_read_by = socket;
+          }
         else
-          it_p->last_read_by = socket;
-      }
+            it->RemovePendingNotification(it_p->profileId, it_p->notificationId);//remove if only 1 profile
+        }
       break;
     }
   }
 }
+
+bool islistEmptyForClient(list<PendingNotification> notf_list, int socket){
+  bool empty = true;
+  list<PendingNotification>::iterator it_p;
+  for(it_p = notf_list.begin(); it_p != notf_list.end(); it_p++){
+    if(it_p->last_read_by != socket){
+      cout << it_p->last_read_by << endl;
+      empty = false;
+      break;
+      }
+    }
+    return empty;
+  }
 
 void* NotificationConsumer(void* arg){
 
@@ -24,11 +41,11 @@ void* NotificationConsumer(void* arg){
     Profile* prof = database.getProfile(user->getUsername());
     while(user->isActive()){
       pthread_mutex_lock(&(prof->pendingnotification_mutex));//blocking behavior for consuming notification while list is empty
-      while(prof->pendingNotifications.empty())
+      while(islistEmptyForClient(prof->pendingNotifications,user->getSocket()))
         pthread_cond_wait(&(prof->not_empty),&(prof->pendingnotification_mutex));
       list<PendingNotification>::iterator it_p;
       for(it_p = prof->pendingNotifications.begin(); it_p != prof->pendingNotifications.end(); it_p++){
-        if(it_p->last_read_by == user->getSocket()){
+        if(it_p->last_read_by != user->getSocket()){
         QueuedMessage msg;
         ReceivedNotification notif = database.GetReceivedNotification(it_p->profileId,it_p->notificationId);
         msg.username = (char*)it_p->profileId.c_str();

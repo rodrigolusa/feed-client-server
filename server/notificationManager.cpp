@@ -29,6 +29,11 @@ void ClearNotifications(string profile, int socket){
         else
           it->pendingNotifications.clear();//remove if only 1 profile
 
+      Profile* notif_prof = database.getProfile(profile);
+      pthread_mutex_lock(&(notif_prof->receivenotification_mutex));
+      //next line removes any receiving notification with 0 followers to receive(clean-up process)
+      it->receivedNotifications.erase(std::remove_if(it->receivedNotifications.begin(), it->receivedNotifications.end(), [&](ReceivedNotification notif){ return (notif.pendingFollowersToReceive == 0); }), it->receivedNotifications.end());
+      pthread_mutex_unlock(&(notif_prof->receivenotification_mutex));
       break;
 
   }
@@ -62,7 +67,12 @@ void* NotificationConsumer(void* arg){
         if(it_p->last_read_by != user->getSocket()){
         cout << "o last read by foi " << it_p->last_read_by << endl;
         QueuedMessage msg;
+        Profile* notif_prof = database.getProfile(it_p->profileId);
+        pthread_mutex_lock(&(notif_prof->receivenotification_mutex));
         ReceivedNotification notif = database.GetReceivedNotification(it_p->profileId,it_p->notificationId);
+        if(it_p->last_read_by != -1)//if it is not -1 nor our socket, then another socket already read it and we can decrease it
+          notif.pendingFollowersToReceive--;
+        pthread_mutex_unlock(&(notif_prof->receivenotification_mutex));
         msg.username = (char*)it_p->profileId.c_str();
         msg.message = (char*)notif.message.c_str();
         msg.timestamp = notif.timestamp;
@@ -105,6 +115,8 @@ void* NotificationProducer(void* arg){
   pthread_create(&new_thread2, NULL, NotificationConsumer, user);
   pthread_detach(new_thread2);
   list<PendingDelayed> pending_list;
+  list<ReceivedNotification> received_list;
+  Profile* userprofile = database.getProfile(name);
   //make socket non-blocking
   fcntl(user->getSocket(), F_SETFL, fcntl(user->getSocket(), F_GETFL, 0) | O_NONBLOCK);
 
@@ -134,13 +146,11 @@ void* NotificationProducer(void* arg){
 				rn.message = pkt->_payload;
 				rn.size = pkt->length;
 				rn.pendingFollowersToReceive = database.GetFollowersNumber(name);
-				database.AddReceivedNotifications(name, rn);
+        if(userprofile->AddReceivedNotification(rn) != true)//if we cant add to received notification, add to list
+				      received_list.push_back(rn);
 				pn.profileId = name;
 				pn.notificationId = notificationId;
 				pending_list.splice(pending_list.end(),getPendingForFollowers(name,pn)); //adds new pending notifications that we need to insert
-        print(pending_list);
-        cout << "antes do erase" << endl;
-        print(pending_list);
         cout << "mensagem recebida foi " << pkt->_payload << getDate(pkt->timestamp) << endl;
 
 				//user->sendMessage(SEND_NAME,(char*)name.c_str());
@@ -153,6 +163,8 @@ void* NotificationProducer(void* arg){
 			}
     }
       pending_list.erase(std::remove_if(pending_list.begin(), pending_list.end(), [&](PendingDelayed notif){ return database.AddPendingNotificationInFollower(notif.follower,notif.pn); }), pending_list.end());
+      received_list.erase(std::remove_if(received_list.begin(), received_list.end(), [&userprofile](ReceivedNotification notif){ return userprofile->AddReceivedNotification(notif); }), received_list.end());
+
       //insert pending notifications from list
   }
 	}

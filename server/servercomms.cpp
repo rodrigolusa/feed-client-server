@@ -24,7 +24,7 @@ int serverComms::init(){
 	serv_addr.sin_addr.s_addr = INADDR_ANY;
 	bzero(&(serv_addr.sin_zero), 8);
 
-	if (bind(this->sckt, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
+	if (::bind(this->sckt, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
 		cout << "ERROR on binding" << endl;
 		return -1;
 	}

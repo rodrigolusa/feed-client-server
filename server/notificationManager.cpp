@@ -1,4 +1,5 @@
-#include "NotificationManager.hpp"
+#include "notificationManager.hpp"
+
 
 int notificationId = 0;
 void ClearNotifications(string profile, int socket){
@@ -6,20 +7,23 @@ void ClearNotifications(string profile, int socket){
   for(it = database.data.begin(); it != database.data.end(); it ++){
     if(it->id == profile){
       list<PendingNotification>::iterator it_p;
-      for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
+    //  for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
         if(database.GetActiveSessionsNumber(profile) == 2){ //if we only have one session active, we can remove the notification
-          if(it_p->last_read_by != -1 && it_p->last_read_by != socket){
-            it->RemovePendingNotification(it_p->profileId, it_p->notificationId);
-          }
-          else
-            it_p->last_read_by = socket;
-          }
+          //if(it_p->last_read_by != -1 && it_p->last_read_by != socket){
+            it->pendingNotifications.erase(std::remove_if(it->pendingNotifications.begin(), it->pendingNotifications.end(), [&socket](PendingNotification notif){ return (notif.last_read_by != socket && notif.last_read_by != -1); }), it->pendingNotifications.end());
+          //  it->RemovePendingNotification(it_p->profileId, it_p->notificationId);
+
+            for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
+              it_p->last_read_by = socket;
+              }
+            }
         else
-            it->RemovePendingNotification(it_p->profileId, it_p->notificationId);//remove if only 1 profile
-        }
+          it->pendingNotifications.clear();//remove if only 1 profile
+
       break;
-    }
+
   }
+}
 }
 
 bool islistEmptyForClient(list<PendingNotification> notf_list, int socket){

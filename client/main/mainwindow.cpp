@@ -52,11 +52,15 @@ void MainWindow::news()
             if (message != NULL && message2->type == CMDS::SEND_DATA) {
               QListWidgetItem *item = new QListWidgetItem(ui->mensagens_recebidas);
               std::string mensagem = "_________________________________________________\n\n";
+              mensagem += "[";
+              mensagem += getDate(message->timestamp);
+              mensagem += "][";
+              mensagem += " ";
               mensagem += message->_payload;
+              mensagem += "]";
+              mensagem += " diz:";
               mensagem += "\n\n";
               mensagem += message2->_payload;
-              mensagem += "\n                                                                 ";
-              mensagem += getDate(getTimestamp(message->timestamp));
               mensagem += "\n";
               item->setText(QString::fromUtf8(mensagem.data(), mensagem.size()));
               QScrollBar *scroll = ui->mensagens_recebidas->verticalScrollBar();

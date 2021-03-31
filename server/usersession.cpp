@@ -45,6 +45,7 @@ void Session::flushsendingQueue(){
     sendMessage(SEND_NAME,it->username, it->timestamp);
     sendMessage(SEND_DATA,it->message, it->timestamp);
   }
+  sendingQueue.clear();
 }
 
 

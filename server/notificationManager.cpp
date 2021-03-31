@@ -7,7 +7,7 @@ void ClearNotifications(string profile, int socket){
     if(it->id == profile){
       list<PendingNotification>::iterator it_p;
       for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
-        if(database.GetActiveSessionsNumber(profile) < 2){ //if we only have one session active, we can remove the notification
+        if(database.GetActiveSessionsNumber(profile) == 2){ //if we only have one session active, we can remove the notification
           if(it_p->last_read_by != -1 && it_p->last_read_by != socket){
             it->RemovePendingNotification(it_p->profileId, it_p->notificationId);
           }
@@ -25,9 +25,10 @@ void ClearNotifications(string profile, int socket){
 bool islistEmptyForClient(list<PendingNotification> notf_list, int socket){
   bool empty = true;
   list<PendingNotification>::iterator it_p;
+  if(notf_list.empty())
+    return true;
   for(it_p = notf_list.begin(); it_p != notf_list.end(); it_p++){
     if(it_p->last_read_by != socket){
-      cout << it_p->last_read_by << endl;
       empty = false;
       break;
       }
@@ -46,6 +47,7 @@ void* NotificationConsumer(void* arg){
       list<PendingNotification>::iterator it_p;
       for(it_p = prof->pendingNotifications.begin(); it_p != prof->pendingNotifications.end(); it_p++){
         if(it_p->last_read_by != user->getSocket()){
+        cout << "o last read by foi " << it_p->last_read_by << endl;
         QueuedMessage msg;
         ReceivedNotification notif = database.GetReceivedNotification(it_p->profileId,it_p->notificationId);
         msg.username = (char*)it_p->profileId.c_str();
@@ -54,9 +56,11 @@ void* NotificationConsumer(void* arg){
         user->sendingQueue.push_back(msg);
         }
       }
-      ClearNotifications(user->getUsername(),user->getSocket());
+      if(user->isActive())
+        ClearNotifications(user->getUsername(),user->getSocket());
       pthread_mutex_unlock(&(prof->pendingnotification_mutex));
-      user->flushsendingQueue();
+      if(user->isActive())
+        user->flushsendingQueue();
     }
     pthread_exit(NULL);
 }

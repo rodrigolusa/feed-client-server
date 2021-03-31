@@ -4,6 +4,7 @@
 using namespace std;
 
 Profile::Profile(){
+  activeSessions = 0;
   pthread_mutex_init(&logincontrol_mutex,NULL);
   pthread_mutex_init(&pendingnotification_mutex,NULL);
   pthread_mutex_init(&receivenotification_mutex,NULL);

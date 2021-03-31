@@ -30,8 +30,8 @@ public:
     list<PendingNotification> GetPendingNotifications(string profile);
     ReceivedNotification GetReceivedNotification(string profile, int id);
     void AddReceivedNotifications(string profile, ReceivedNotification rn);
-    void AddPendingNotifications(string profile, PendingNotification pn);
-    void AddPendingNotificationInFollower(string follower, PendingNotification pn);
+    //list<PendingNotification*> AddPendingNotifications(string profile, PendingNotification pn);
+    bool AddPendingNotificationInFollower(string follower, PendingNotification pn);
     void RemoveReceivedNotifications(string profile, int id);
     void RemovePendingNotifications(string profile, string who, int id);
     void WriteDatabase(string file);

@@ -71,6 +71,7 @@ int main(int argc, char *argv[])
 		else{
 			pthread_t new_thread;
 			pthread_create(&new_thread, NULL, NotificationProducer, new_session);
+			pthread_detach(new_thread);
 			}
 
 		}

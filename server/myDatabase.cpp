@@ -184,30 +184,42 @@ void MyDatabase::AddReceivedNotifications(string profile, ReceivedNotification r
         }
     }
 }
-
-void MyDatabase::AddPendingNotifications(string profile, PendingNotification pn){
+/*
+list<PendingNotification> MyDatabase::AddPendingNotifications(string profile, PendingNotification pn){
     list<Profile>::iterator it;
+    list<PendingNotification*> still_pending;
+    PendingNotification* notifpointer;
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == profile){
             list<string>::iterator it_f;
             for(it_f = it->followers.begin(); it_f != it->followers.end(); it_f++){
-                AddPendingNotificationInFollower(*it_f, pn);
+                notifpointer = AddPendingNotificationInFollower(*it_f, pn);
+                if(notifpointer != NULL)
+                  still_pending.push_back(notifpointer);
             }
+            break;
+        }
+    }
+    return still_pending;
+}
+*/
+
+bool MyDatabase::AddPendingNotificationInFollower(string follower, PendingNotification pn){
+    list<Profile>::iterator it;
+    for(it = data.begin(); it!= data.end(); it++){
+        if(it->id == follower){
+            if(pthread_mutex_trylock(&(it->pendingnotification_mutex)) == 0){
+              it->AddPendingNotification(pn);
+              pthread_mutex_unlock(&(it->pendingnotification_mutex));
+              pthread_cond_broadcast(&(it->not_empty));
+              return true;
+            }
+            return false;
             break;
         }
     }
 }
 
-void MyDatabase::AddPendingNotificationInFollower(string follower, PendingNotification pn){
-    list<Profile>::iterator it;
-    for(it = data.begin(); it!= data.end(); it++){
-        if(it->id == follower){
-            it->AddPendingNotification(pn);
-            pthread_cond_broadcast(&(it->not_empty));
-            break;
-        }
-    }
-}
 
 void MyDatabase::RemoveReceivedNotifications(string profile, int id){
     list<Profile>::iterator it;

@@ -4,10 +4,11 @@
 using namespace std;
 
 Profile::Profile(){
-  activeSessions = 0;
-  pthread_mutex_init(&logincontrol_mutex,NULL);
-  pthread_mutex_init(&pendingnotification_mutex,NULL);
-  pthread_mutex_init(&receivenotification_mutex,NULL);
+  //activeSessions = 0;
+  //pthread_mutex_init(&logincontrol_mutex,NULL);
+  //pthread_mutex_init(&pendingnotification_mutex,NULL);
+  //pthread_mutex_init(&receivenotification_mutex,NULL);
+  //pthread_cond_init(&not_empty, NULL);
 }
 
 Profile::Profile(string i){
@@ -16,6 +17,7 @@ Profile::Profile(string i){
     pthread_mutex_init(&logincontrol_mutex,NULL);
     pthread_mutex_init(&pendingnotification_mutex,NULL);
     pthread_mutex_init(&receivenotification_mutex,NULL);
+    pthread_cond_init(&not_empty, NULL);
 };
 
 void Profile::AddFollower(string p){

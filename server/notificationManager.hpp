@@ -12,6 +12,12 @@
 #include "receivedNotification.hpp"
 #include "pendingNotification.hpp"
 #include "usersession.hpp"
+#include <fcntl.h>
+typedef struct{
+  string follower;
+  PendingNotification pn;
+}PendingDelayed;
+list<PendingDelayed> getPendingForFollowers(string profile, PendingNotification pn);
 void SendNotification(string toProfile, ReceivedNotification rn);
 void ClearNotifications(string profile);
 void* NotificationConsumer(void* arg);

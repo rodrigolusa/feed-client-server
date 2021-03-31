@@ -111,12 +111,9 @@ packet* BasicComm::readMessage(){
   while(dataRecv < maxPacketSize){
     n = read(this->sckt, serialized+dataRecv, maxPacketSize);
     if (n < 0){
-      cout << "Error reading message" << endl;
-      connectionInterrupted();
       return NULL;
     }
     if (n == 0){
-      cout << "Connection lost" << endl;
       connectionInterrupted();
       return NULL;
     }

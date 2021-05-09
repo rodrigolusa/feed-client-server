@@ -73,10 +73,11 @@ packet* BasicComm::deserializeData(char* serializedData){
 }
 
 
-int BasicComm::sendMessage(uint16_t cmd, char* data, char* timestamp){
+int BasicComm::sendMessage(uint16_t cmd, char* data, char* timestamp,int sckt){
   int n;
   int msgtype = cmd;
-
+  if(sckt == -1)
+    sckt = this->sckt;
   packet* pkt = new packet;
   pkt->type = cmd;
   pkt->seqn = this->seqnum + 1;
@@ -92,7 +93,7 @@ int BasicComm::sendMessage(uint16_t cmd, char* data, char* timestamp){
   }
   pkt->_payload = data;
   char* serializedPkt = serializeData(pkt);
-  n = write(this->sckt, serializedPkt, maxPacketSize);
+  n = write(sckt, serializedPkt, maxPacketSize);
   if (n < 0){
 	 cout << "Error sending message" << endl;
    this->active = false;
@@ -102,14 +103,15 @@ int BasicComm::sendMessage(uint16_t cmd, char* data, char* timestamp){
   return 0;
 }
 
-packet* BasicComm::readMessage(){
+packet* BasicComm::readMessage(int sckt){
   int n;
-
+  if(sckt == -1)
+    sckt = this->sckt;
   char* serialized = new char[maxPacketSize];
   bzero(serialized,maxPacketSize);
   int dataRecv = 0;
   while(dataRecv < maxPacketSize){
-    n = read(this->sckt, serialized+dataRecv, maxPacketSize);
+    n = read(sckt, serialized+dataRecv, maxPacketSize);
     if (n < 0){
       delete[] serialized;
       return NULL;
@@ -123,19 +125,15 @@ packet* BasicComm::readMessage(){
   packet* pkt = deserializeData(serialized);
 
 
-  fprintf(stderr,"passei aqui\n");
-
   if (pkt->seqn == this->seqack + 1){//if packet is next in order, we can just inc SEQ ACK and return packet
     this->seqack++;
     this->seqack += this->numHigherAcks; //accounting for new packets(higher seq num) that were received before this one.
     this->numHigherAcks = 0; //we can also reset counter of acks above current one, once they are already accounted for
-    fprintf(stderr,"passei aqui2\n");
 
     return pkt;
   }
 
   else if(pkt->seqn < this->seqack + 1){ //if sequence number of source is smaller than acknowledged by dest,
-    fprintf(stderr,"passei aqui3\n");
                                   //it's definitely a replicate, we can just discard it.
     return NULL;
   }

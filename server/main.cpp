@@ -1,7 +1,7 @@
 #include <iostream>
 #include "primaryManager.hpp"
 #include "replicaManager.hpp"
-
+#include <unistd.h>
 int main(int argc, char *argv[]){
 
 
@@ -14,18 +14,17 @@ int main(int argc, char *argv[]){
 
     if(replica.isPrimary()){
       primaryManager primary;
-      primary.init();
+      primary.init(&replica);
       while(replica.isPrimary()){
-        primary.acceptConnections();
         //primary.sendKeepAlive();
-        //replica.acceptReplicas();
         //replica.receiveMessages();
       }
       //primary.finalize();
     }
     else
       do{
-        //replica.acceptReplicas();
+          usleep(100000);
+          fprintf(stderr,"Sou uma replica");
         //replica.receiveMessages();
 
     }while(replica.isPrimary() != true);

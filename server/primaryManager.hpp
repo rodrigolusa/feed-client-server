@@ -17,21 +17,28 @@
 #include "notificationManager.hpp"
 #include "receivedNotification.hpp"
 #include "pendingNotification.hpp"
+#include "replicaManager.hpp"
 
 #define DEFAULT_PORT 4000
 
 
 using namespace std;
 
-
 class primaryManager{
 private:
-	int sckt;
 	int port;
 	//list<Replica> replicas;
 public:
-	int init();
-	int acceptConnections();
+	int init(replicaManager* replica);
+	int sckt;
 	void closeSocket();
 	void sendKeepAlive();
 };
+
+
+typedef struct{
+	replicaManager* replica;
+	primaryManager* primary;
+}Managers;
+
+void* acceptClients(void*);//thread to accept clients

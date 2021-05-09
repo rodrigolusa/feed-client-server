@@ -16,6 +16,7 @@ typedef struct{
 class Session: public BasicComm{
 private: //session info, add more as it is needed
   string username;
+  string hostname;
   int port;
 public:
   list<QueuedMessage> sendingQueue;
@@ -26,8 +27,9 @@ public:
   void setPort(int port);
   int getPort();
 
-  Session(int socket){
+  Session(int socket,string hostname){
     this->sckt = socket;
+    this->hostname = hostname;
     setActive(true);
     this->seqnum = 0;
     this->seqack = 0;

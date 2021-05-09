@@ -10,7 +10,6 @@
 #include <netinet/in.h>
 #include <netdb.h>
 //#include "utils.hpp"
-
 typedef struct __packet{
 	uint16_t type;
 	uint16_t seqn;
@@ -48,3 +47,6 @@ public:
 
 char* getTimestamp(char* timestamp);
 char* getDate(char* timestamp);
+int connectToSv(std::string host, int port,int socket);
+int initListeningSocket(int port);
+int createSocket();

@@ -33,7 +33,7 @@ public:
     list<PendingNotification> GetPendingNotifications(string profile);
     ReceivedNotification GetReceivedNotification(string profile, int id);
     void AddReceivedNotifications(string profile, ReceivedNotification rn);
-    //list<PendingNotification*> AddPendingNotifications(string profile, PendingNotification pn);
+    void AddPendingNotifications(string profile, PendingNotification pn);
     bool AddPendingNotificationInFollower(string follower, PendingNotification pn);
     void RemoveReceivedNotifications(string profile, int id);
     void RemovePendingNotifications(string profile, string who, int id);
@@ -55,3 +55,4 @@ public:
     void initReceivedNotif();
     void UpdateProfileInFile(string profile, string oldhost, int oldport, string newhost = "-1",int newport = -1);
 };
+extern MyDatabase database;

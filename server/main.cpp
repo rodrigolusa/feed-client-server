@@ -7,26 +7,26 @@ int main(int argc, char *argv[]){
 
   replicaManager replica;
   int port = atoi(argv[1]);
-  replica.init(port);
-
+  if(replica.init(port) == -1)
+    exit(1);
   while(true){
 
 
     if(replica.isPrimary()){
       primaryManager primary;
-      primary.init(port + MAX_NUM_REPLICAS);
+      primary.init();
       while(replica.isPrimary()){
         primary.acceptConnections();
-        primary.sendKeepAlive();
-        replica.acceptReplicas();
-        replica.receiveMessages();
+        //primary.sendKeepAlive();
+        //replica.acceptReplicas();
+        //replica.receiveMessages();
       }
-      primary.finalize();
+      //primary.finalize();
     }
     else
       do{
-        replica.acceptReplicas();
-        replica.receiveMessages();
+        //replica.acceptReplicas();
+        //replica.receiveMessages();
 
     }while(replica.isPrimary() != true);
 

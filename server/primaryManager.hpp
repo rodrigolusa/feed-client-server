@@ -7,18 +7,18 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <algorithm>
 #include <pthread.h>
 
 #include "myDatabase.hpp"
-extern MyDatabase database;
 #include "profile.hpp"
 #include "usersession.hpp"
 #include "notificationManager.hpp"
 #include "receivedNotification.hpp"
 #include "pendingNotification.hpp"
 
-
+#define DEFAULT_PORT 4000
 
 
 using namespace std;
@@ -30,7 +30,7 @@ private:
 	int port;
 	//list<Replica> replicas;
 public:
-	int init(int port);
+	int init();
 	int acceptConnections();
 	void closeSocket();
 	void sendKeepAlive();

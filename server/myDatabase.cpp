@@ -3,6 +3,7 @@
 
 using namespace std;
 
+MyDatabase database;
 MyDatabase::MyDatabase(){
 };
 
@@ -189,6 +190,20 @@ list<string> MyDatabase::GetFollowers(string profile){
     return ret;
 }
 
+void MyDatabase::AddPendingNotifications(string profile, PendingNotification pn){
+    list<Profile>::iterator it;
+    for(it = data.begin(); it!= data.end(); it++){
+        if(it->id == profile){
+            list<string>::iterator it_f;
+            for(it_f = it->followers.begin(); it_f != it->followers.end(); it_f++){
+                 AddPendingNotificationInFollower(*it_f, pn);
+            }
+            break;
+        }
+    }
+    return;
+}
+
 list<string> MyDatabase::GetFollowing(string profile){
     list<string> ret;
     list<Profile>::iterator it;
@@ -339,28 +354,32 @@ void MyDatabase::WriteProfile(string id){
 }
 void MyDatabase::initProfiles(){
   string profile;
+  f_profiles.open("profiles.txt",fstream::in);
   while(f_profiles >> profile){
     AddProfile(profile);
   }
+  f_profiles.close();
 }
 
 void MyDatabase::initFollowers(){
   string follower;
   string followed;
-
+  f_followers.open("followers.txt",fstream::in);
   while(f_followers >> follower){
     f_followers >> followed;
     AddFollowing(follower,followed);
     AddFollower(followed,follower);
   }
+    f_followers.close();
 }
 void MyDatabase::WriteFollower(string follower, string followed){
+  f_followers.open("followers.txt",fstream::app);
   string dataToWrite(follower);
   dataToWrite.append(" ");
   dataToWrite.append(followed);
   dataToWrite.append(" ");
   f_followers << dataToWrite;
-  f_followers.flush();
+  f_followers.close();
 }
 
 void MyDatabase::WritePendingFile(string follower, PendingNotification pn){
@@ -530,8 +549,6 @@ void MyDatabase::initDatabase(){
   f_followers.close();
   received_notifs_f.close();
   pending_notifs_f.close();
-  f_profiles.open("profiles.txt",fstream::app); //opens for appending at the end of file
-  f_followers.open("followers.txt",fstream::app);
   this->init = false;
   WriteDatabase("");
 }

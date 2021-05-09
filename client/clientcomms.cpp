@@ -46,7 +46,9 @@ int ClientComms::login(){
   sendMessage(LOGIN,this->username);
   packet* pkt = readMessage();
   if(pkt->type == SUCCESS){
-    sendMessage(BACKUP_PORT,this->backup_port);
+    char* dummieport = "4002";
+    //sendMessage(BACKUP_PORT,(char*)to_string(this->backup_port).c_str());
+    sendMessage(BACKUP_PORT,(char*)dummieport);
     pkt = readMessage();
     if(pkt->type == SUCCESS)
       return 0;
@@ -90,7 +92,7 @@ void ClientComms::connectionInterrupted(){ //closes connection between client an
     };
     return;
   }
-}
+
 
 void ClientComms::closeSocket(){
   close(this->sckt);

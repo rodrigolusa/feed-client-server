@@ -156,4 +156,66 @@ void BasicComm::setActive(bool value){
 int BasicComm::getSocket(){
   return this->sckt;
 }
+
+int initListeningSocket(int port){
+
+struct sockaddr_in serv_addr, cli_addr;
+int sckt;
+
+if ((sckt = socket(AF_INET, SOCK_STREAM, 0)) == -1){
+      cout << "ERROR opening socket";
+      return -1;
+    }
+    int value=1;
+
+if (setsockopt(sckt, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value)) == -1) {
+    perror("setsockopt");
+    exit(1);
+}
+serv_addr.sin_family = AF_INET;
+serv_addr.sin_port = htons(port);
+serv_addr.sin_addr.s_addr = INADDR_ANY;
+bzero(&(serv_addr.sin_zero), 8);
+
+if (::bind(sckt, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0){
+  cout << "Port already in use" << endl;
+  return -1;
+}
+
+listen(sckt, 5);
+
+return sckt;
+}
+
+
+
+int createSocket(){
+  int sckt;
+  if ((sckt = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+      return -2;
+  else
+    return sckt;
+}
+
+int connectToSv(std::string host, int port, int sckt){
+  struct hostent *server;
+  struct sockaddr_in serv_addr;
+  server = gethostbyname(host.c_str());
+  if (server == NULL) {
+        fprintf(stderr,"ERROR, no such host\n");
+        exit(0);
+    }
+  serv_addr.sin_family = AF_INET;
+  serv_addr.sin_port = htons(port);
+  serv_addr.sin_addr = *((struct in_addr *)server->h_addr);
+  bzero(&(serv_addr.sin_zero), 8);
+
+  if (connect(sckt,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0){
+      return 0;
+}
+  else
+    return 1;
+  }
+
+
 //int BasicComm::ping(){}

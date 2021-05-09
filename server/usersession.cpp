@@ -10,26 +10,27 @@ int Session::attemptLogin(){
   const char* name = new char[pkt->length];
   name = pkt->_payload;
   int count = 0;
+  sendMessage(SUCCESS);
 
-
-  packet* pkt = readMessage();
+  pkt = readMessage();
   if(pkt->type != BACKUP_PORT){
     cout << "Login ERROR, PACKET SHOULD BE PORT" << endl;
     sendMessage(ERROR);
     return -1;
     }
 
+
   //Verifica se o perfil ja existe na nase de dados, senão o adiciona.
   if(!database.ExistsProfile(name)){
     Profile prof(name);
     database.AddProfile(prof);
-    database.AddSessionCount(name); //Apos adicionar o perfil ja incrementa o numero de sessoes ativas
+    database.AddSessionCount(name,this->hostname,this->port); //Apos adicionar o perfil ja incrementa o numero de sessoes ativas
   }
   else{
     Profile* prof = database.getProfile(name);
     pthread_mutex_lock(&(prof->logincontrol_mutex));//locks critical session so 2 clients can't login with same user simultaneously
     if(database.GetActiveSessionsNumber(name) < 2){ //verifica se existe sessao disponivel, senão desativa o cliente (não sei se esta correto)
-      database.AddSessionCount(name);
+      database.AddSessionCount(name,this->hostname,this->port);
     pthread_mutex_unlock(&(prof->logincontrol_mutex));
     }
     else{
@@ -63,7 +64,7 @@ void Session::connectionInterrupted(){ //closes socket and removes session from 
   setActive(false);
   Profile* prof = database.getProfile(this->username);
   pthread_mutex_lock(&(prof->logincontrol_mutex));//locks critical session so 2 clients can't login with same user simultaneously
-  database.SubtractSessionCount(this->username);
+  database.SubtractSessionCount(this->username,hostname,this->port);
   pthread_mutex_unlock(&(prof->logincontrol_mutex));
 }
 
@@ -72,7 +73,7 @@ string Session::getUsername(){
   return this->username;
 }
 
-int Session:getPort(){
+int Session::getPort(){
   return this->port;
 }
 

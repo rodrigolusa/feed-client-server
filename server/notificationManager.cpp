@@ -65,7 +65,6 @@ void* NotificationConsumer(void* arg){
       list<PendingNotification>::iterator it_p;
       for(it_p = prof->pendingNotifications.begin(); it_p != prof->pendingNotifications.end(); it_p++){
         if(it_p->last_read_by != user->getPort()){
-        cout << "o last read by foi " << it_p->last_read_by << endl;
         QueuedMessage msg;
         Profile* notif_prof = database.getProfile(it_p->profileId);
         pthread_mutex_lock(&(notif_prof->receivenotification_mutex));

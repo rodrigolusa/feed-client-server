@@ -13,6 +13,7 @@
 #include "pendingNotification.hpp"
 #include "usersession.hpp"
 #include <fcntl.h>
+#include <set>
 typedef struct{
   string follower;
   PendingNotification pn;

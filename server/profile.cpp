@@ -18,6 +18,10 @@ Profile::Profile(string i){
     pthread_mutex_init(&pendingnotification_mutex,NULL);
     pthread_mutex_init(&receivenotification_mutex,NULL);
     pthread_cond_init(&not_empty, NULL);
+    for(int i = 0; i < 2;i++){
+      backup_hosts[i] = "";
+      backup_ports[i] = -1;
+    }
 };
 
 void Profile::AddFollower(string p){

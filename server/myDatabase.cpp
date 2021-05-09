@@ -14,6 +14,62 @@ void MyDatabase::AddProfile(Profile d){
       WriteProfile(d.id);
 }
 
+
+void MyDatabase::UpdateProfileInFile(string profile, string oldhost, int oldport, string newhost ,int newport){
+  f_profiles.open("profiles.txt",fstream::in); //opens for appending at the end of file
+  string id,port,host, dataToWrite,line;
+  fstream temp;
+  temp.open("temp.txt",fstream::out);
+  dataToWrite.append(profile);
+  while(getline(f_profiles,line)){
+  stringstream lineStream(line);
+  lineStream >> id;
+    if(id == profile){
+        lineStream >> host;
+        lineStream >> port;
+        if(host == oldhost && stoi(port) == oldport)
+          {
+              dataToWrite.append(newhost);
+              dataToWrite.append(" ");
+              dataToWrite.append(to_string(newport)); //add new information
+              dataToWrite.append(" ");
+              lineStream >> host;
+              lineStream >> port;
+              dataToWrite.append(host);//append info about other session
+              dataToWrite.append(" ");
+              dataToWrite.append(port);
+              dataToWrite.append("\n");
+              temp << dataToWrite; //write to file.
+
+          }
+          else{//if it is not the first host-port pair, it is the last.
+            dataToWrite.append(host);//append info about other session
+            dataToWrite.append(" ");
+            dataToWrite.append(port);
+            dataToWrite.append(" ");
+            dataToWrite.append(newhost);
+            dataToWrite.append(" ");
+            dataToWrite.append(to_string(newport)); //add new information
+            dataToWrite.append("\n");
+            temp << dataToWrite; //write to file.
+          }
+    }
+
+    else
+    {
+      line.append("\n");
+      temp << line;
+    continue;
+    }
+  }
+  f_profiles.close();
+  temp.close();
+  remove("f_profiles.txt");
+  rename("temp.txt","f_profiles.txt");
+}
+
+
+
 Profile* MyDatabase::getProfile(string p){
   list<Profile>::iterator it;
   if(data.size() > 0){
@@ -67,21 +123,33 @@ int MyDatabase::GetActiveSessionsNumber(string id){
     return -1;
 }
 
-void MyDatabase::AddSessionCount(string id){
+void MyDatabase::AddSessionCount(string id,string host, int port){
     list<Profile>::iterator it;
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == id){
             it->activeSessions++;
+            for(int i = 0; i < 2;i++){
+              if(it->backup_ports[i] == -1){
+                it->backup_ports[i] = port;
+                it->backup_hosts[i] = host;
+                break;
+              }
+            }
             break;
         }
     }
 }
 
-void MyDatabase::SubtractSessionCount(string id){
+void MyDatabase::SubtractSessionCount(string id,string host,int port){
     list<Profile>::iterator it;
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == id){
             it->activeSessions--;
+            for(int i = 0; i < 2;i++){
+              if(it->backup_ports[i] == port){
+                it->backup_ports[i] = -1;
+              }
+            }
             break;
         }
     }
@@ -184,25 +252,6 @@ void MyDatabase::AddReceivedNotifications(string profile, ReceivedNotification r
         }
     }
 }
-/*
-list<PendingNotification> MyDatabase::AddPendingNotifications(string profile, PendingNotification pn){
-    list<Profile>::iterator it;
-    list<PendingNotification*> still_pending;
-    PendingNotification* notifpointer;
-    for(it = data.begin(); it!= data.end(); it++){
-        if(it->id == profile){
-            list<string>::iterator it_f;
-            for(it_f = it->followers.begin(); it_f != it->followers.end(); it_f++){
-                notifpointer = AddPendingNotificationInFollower(*it_f, pn);
-                if(notifpointer != NULL)
-                  still_pending.push_back(notifpointer);
-            }
-            break;
-        }
-    }
-    return still_pending;
-}
-*/
 
 bool MyDatabase::AddPendingNotificationInFollower(string follower, PendingNotification pn){
     list<Profile>::iterator it;
@@ -274,10 +323,19 @@ void MyDatabase::ReadDatabase(string file){
 }
 
 void MyDatabase::WriteProfile(string id){
+  f_profiles.open("profiles.txt",fstream::app); //opens for appending at the end of file
   string dataToWrite(id);
   dataToWrite.append(" ");
+  dataToWrite.append(to_string(-1));
+  dataToWrite.append(" ");
+  dataToWrite.append(to_string(-1));
+  dataToWrite.append(" ");
+  dataToWrite.append(to_string(-1));
+  dataToWrite.append(" ");
+  dataToWrite.append(to_string(-1));
+  dataToWrite.append("\n");
   f_profiles << dataToWrite.c_str();
-  f_profiles.flush();
+  f_profiles.close();
 }
 void MyDatabase::initProfiles(){
   string profile;
@@ -305,14 +363,173 @@ void MyDatabase::WriteFollower(string follower, string followed){
   f_followers.flush();
 }
 
+void MyDatabase::WritePendingFile(string follower, PendingNotification pn){
+  string dataToWrite(follower);
+  dataToWrite.append(" ");
+  dataToWrite.append(pn.profileId);
+  dataToWrite.append(" ");
+  dataToWrite.append(to_string(pn.notificationId));
+  dataToWrite.append(" ");
+  dataToWrite.append(to_string(pn.last_read_by));
+  dataToWrite.append("\n");
+  pending_notifs_f << dataToWrite;
+  pending_notifs_f.flush();
+}
+
+void MyDatabase::WriteReceivedFile(string username, ReceivedNotification rn){
+  string dataToWrite(to_string(rn.id));
+  dataToWrite.append(" ");
+  dataToWrite.append(rn.timestamp);
+  dataToWrite.append(" ");
+  dataToWrite.append(rn.message);
+  dataToWrite.append(" ");
+  dataToWrite.append(to_string(rn.size));
+  dataToWrite.append(" ");
+  dataToWrite.append(to_string(rn.pendingFollowersToReceive));
+  dataToWrite.append(" ");
+  dataToWrite.append(username);
+  dataToWrite.append("\n");
+  received_notifs_f << dataToWrite;
+  received_notifs_f.flush();
+}
+
+
+
+void MyDatabase::RemoveReceivedFromFile(int idToRemove){
+  fstream temp;
+  string line,id, dataToWrite;
+
+  received_notifs_f.open("received_notif.txt",fstream::in);
+  temp.open("temp.txt",fstream::out);
+
+  while(getline(received_notifs_f,line)){
+  stringstream lineStream(line);
+  lineStream >> id;
+    if(stoi(id) == idToRemove)
+      continue;
+    else
+    {
+      line.append("\n");
+      temp << line;
+    continue;
+    }
+  }
+  received_notifs_f.close();
+  temp.close();
+  remove("received_notif.txt");
+  rename("temp.txt","received_notif.txt");
+}
+
+void MyDatabase::RemovePendingsFile(PendingNotification* pendingstoRemove,PendingNotification* pendingsToUpdate,int* last_read_by, int removeSize,int updateSize, string profile){
+  fstream temp;
+  string line,id, dataToWrite, username,follower;
+  bool removeBool = false;
+  bool update = false;
+  pending_notifs_f.open("pending_notif.txt",fstream::in);
+  temp.open("temp.txt",fstream::out);
+
+  while(getline(pending_notifs_f,line)){
+  stringstream lineStream(line);
+  lineStream >> follower;
+  lineStream >> username;
+  lineStream >> id;
+  for(int i = 0; i < removeSize; i ++){
+    if(pendingstoRemove[i].profileId == username && pendingstoRemove[i].notificationId == stoi(id) && profile == follower){
+      removeBool = true;
+      break;
+    }
+  }
+
+  for(int i = 0; i < updateSize; i ++){
+    if(pendingsToUpdate[i].profileId == username && pendingsToUpdate[i].notificationId == stoi(id) && profile == follower){
+      dataToWrite.append(username);
+      dataToWrite.append(" ");
+      dataToWrite.append(id);
+      dataToWrite.append(" ");
+      dataToWrite.append(to_string(last_read_by[i]));
+      dataToWrite.append("\n");
+      pending_notifs_f << dataToWrite;
+      update = true;
+      break;
+    }
+  }
+    if(removeBool || update){
+      removeBool = false;
+      update = false;
+      continue;
+    }
+    else
+    {
+      line.append("\n");
+      temp << line;
+    continue;
+    }
+  }
+  pending_notifs_f.close();
+  temp.close();
+  remove("pending_notif.txt");
+  rename("temp.txt","pending_notif.txt");
+}
+
+
+
+void MyDatabase::initPendingNotif(){
+  string profile;
+  string follower;
+  string notificationId;
+  string last_read_by;
+
+  while(pending_notifs_f >> follower){
+    pending_notifs_f >> profile;
+    pending_notifs_f >> notificationId;
+    pending_notifs_f >> last_read_by;
+    PendingNotification pn;
+    pn.profileId = profile;
+    pn.notificationId = stoi(notificationId);
+    pn.last_read_by = stoi(last_read_by);
+    AddPendingNotificationInFollower(follower,pn);
+  }
+}
+
+void MyDatabase::initReceivedNotif(){
+  string id;
+  string timestamp;
+  string message;
+  string size;
+  string pendingFollowersToReceive;
+  string username;
+  while(received_notifs_f >> id){
+    received_notifs_f >> timestamp;
+    received_notifs_f >> message;
+    received_notifs_f >> size;
+    received_notifs_f >> pendingFollowersToReceive;
+    received_notifs_f >> username;
+
+    ReceivedNotification rn;
+    rn.id = stoi(id);
+    rn.timestamp = (char*)timestamp.c_str();
+    rn.message = message;
+    rn.size=  stoi(size);
+    rn.pendingFollowersToReceive = stoi(pendingFollowersToReceive);
+
+
+    AddReceivedNotifications(username,rn);
+  }
+}
 void MyDatabase::initDatabase(){
   this->init = true;
-  f_profiles.open("profiles.txt",fstream::in);//opens for reading and creating database
+  f_profiles.open("profiles.txt",fstream::in);//opens for reading and loading database
   f_followers.open("followers.txt",fstream::in);
+  received_notifs_f.open("received_notif.txt",fstream::in);
+  pending_notifs_f.open("pending_notif.txt",fstream::in);
   initProfiles();
   initFollowers();
+  initPendingNotif();
+  initReceivedNotif();
   f_profiles.close();
   f_followers.close();
+  received_notifs_f.close();
+  pending_notifs_f.close();
   f_profiles.open("profiles.txt",fstream::app); //opens for appending at the end of file
   f_followers.open("followers.txt",fstream::app);
   this->init = false;

@@ -11,7 +11,7 @@ void print(list<PendingDelayed> const &list)
 
 
 int notificationId = 0;
-void ClearNotifications(string profile, int socket){
+void ClearNotifications(string profile, int port){
   list<Profile>::iterator it;
   for(it = database.data.begin(); it != database.data.end(); it ++){
     if(it->id == profile){
@@ -19,11 +19,11 @@ void ClearNotifications(string profile, int socket){
     //  for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
         if(database.GetActiveSessionsNumber(profile) == 2){ //if we only have one session active, we can remove the notification
           //if(it_p->last_read_by != -1 && it_p->last_read_by != socket){
-            it->pendingNotifications.erase(std::remove_if(it->pendingNotifications.begin(), it->pendingNotifications.end(), [&socket](PendingNotification notif){ return (notif.last_read_by != socket && notif.last_read_by != -1); }), it->pendingNotifications.end());
+            it->pendingNotifications.erase(std::remove_if(it->pendingNotifications.begin(), it->pendingNotifications.end(), [&port](PendingNotification notif){ return (notif.last_read_by != port && notif.last_read_by != -1); }), it->pendingNotifications.end());
           //  it->RemovePendingNotification(it_p->profileId, it_p->notificationId);
 
             for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
-              it_p->last_read_by = socket;
+              it_p->last_read_by = port;
               }
             }
         else
@@ -40,13 +40,13 @@ void ClearNotifications(string profile, int socket){
 }
 }
 
-bool islistEmptyForClient(list<PendingNotification> notf_list, int socket){
+bool islistEmptyForClient(list<PendingNotification> notf_list, int port){
   bool empty = true;
   list<PendingNotification>::iterator it_p;
   if(notf_list.empty())
     return true;
   for(it_p = notf_list.begin(); it_p != notf_list.end(); it_p++){
-    if(it_p->last_read_by != socket){
+    if(it_p->last_read_by != port){
       empty = false;
       break;
       }
@@ -59,12 +59,12 @@ void* NotificationConsumer(void* arg){
     Profile* prof = database.getProfile(user->getUsername());
     while(user->isActive()){
       pthread_mutex_lock(&(prof->pendingnotification_mutex));//blocking behavior for consuming notification while list is empty
-      while(islistEmptyForClient(prof->pendingNotifications,user->getSocket())){
+      while(islistEmptyForClient(prof->pendingNotifications,user->getPort())){
         pthread_cond_wait(&(prof->not_empty),&(prof->pendingnotification_mutex));
       }
       list<PendingNotification>::iterator it_p;
       for(it_p = prof->pendingNotifications.begin(); it_p != prof->pendingNotifications.end(); it_p++){
-        if(it_p->last_read_by != user->getSocket()){
+        if(it_p->last_read_by != user->getPort()){
         cout << "o last read by foi " << it_p->last_read_by << endl;
         QueuedMessage msg;
         Profile* notif_prof = database.getProfile(it_p->profileId);
@@ -80,7 +80,7 @@ void* NotificationConsumer(void* arg){
         }
       }
       if(user->isActive())
-        ClearNotifications(user->getUsername(),user->getSocket());
+        ClearNotifications(user->getUsername(),user->getPort());
       pthread_mutex_unlock(&(prof->pendingnotification_mutex));
       if(user->isActive())
         user->flushsendingQueue();
@@ -116,6 +116,7 @@ void* NotificationProducer(void* arg){
   pthread_detach(new_thread2);
   list<PendingDelayed> pending_list;
   list<ReceivedNotification> received_list;
+  set<int> notifications_ids;
   Profile* userprofile = database.getProfile(name);
   //make socket non-blocking
   fcntl(user->getSocket(), F_SETFL, fcntl(user->getSocket(), F_GETFL, 0) | O_NONBLOCK);
@@ -129,7 +130,10 @@ void* NotificationProducer(void* arg){
 
 			ReceivedNotification rn;
 			PendingNotification pn;
-      if(pkt != NULL){
+      if(pkt == NULL && pending_list.empty() && received_list.empty()){
+        usleep(10);
+      }
+      else{
 			switch (pkt->type)
 			{
 			case LOGOUT:
@@ -146,8 +150,10 @@ void* NotificationProducer(void* arg){
 				rn.message = pkt->_payload;
 				rn.size = pkt->length;
 				rn.pendingFollowersToReceive = database.GetFollowersNumber(name);
-        if(userprofile->AddReceivedNotification(rn) != true)//if we cant add to received notification, add to list
+        if(userprofile->AddReceivedNotification(rn) != true){//if we cant add to received notification, add to list
 				      received_list.push_back(rn);
+              notifications_ids.insert(rn.id);
+            }
 				pn.profileId = name;
 				pn.notificationId = notificationId;
 				pending_list.splice(pending_list.end(),getPendingForFollowers(name,pn)); //adds new pending notifications that we need to insert
@@ -161,9 +167,19 @@ void* NotificationProducer(void* arg){
         user->sendMessage(ERROR);
 				break;
 			}
+      if (pkt != NULL)
+        delete pkt;
     }
-      pending_list.erase(std::remove_if(pending_list.begin(), pending_list.end(), [&](PendingDelayed notif){ return database.AddPendingNotificationInFollower(notif.follower,notif.pn); }), pending_list.end());
-      received_list.erase(std::remove_if(received_list.begin(), received_list.end(), [&userprofile](ReceivedNotification notif){ return userprofile->AddReceivedNotification(notif); }), received_list.end());
+
+      list<ReceivedNotification>::iterator  firstToRemoveReceiv = std::remove_if(received_list.begin(), received_list.end(), [&userprofile](ReceivedNotification notif){ return userprofile->AddReceivedNotification(notif); });
+      list<PendingDelayed>::iterator firstToRemovePend = std::remove_if(pending_list.begin(), pending_list.end(), [&](PendingDelayed notif){ return database.AddPendingNotificationInFollower(notif.follower,notif.pn); });
+
+
+      pending_list.erase(firstToRemovePend, pending_list.end());
+      received_list.erase(firstToRemoveReceiv, received_list.end());
+
+
+
 
       //insert pending notifications from list
   }

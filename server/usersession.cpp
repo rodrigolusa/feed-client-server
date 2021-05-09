@@ -10,6 +10,15 @@ int Session::attemptLogin(){
   const char* name = new char[pkt->length];
   name = pkt->_payload;
   int count = 0;
+
+
+  packet* pkt = readMessage();
+  if(pkt->type != BACKUP_PORT){
+    cout << "Login ERROR, PACKET SHOULD BE PORT" << endl;
+    sendMessage(ERROR);
+    return -1;
+    }
+
   //Verifica se o perfil ja existe na nase de dados, senão o adiciona.
   if(!database.ExistsProfile(name)){
     Profile prof(name);
@@ -61,4 +70,12 @@ void Session::connectionInterrupted(){ //closes socket and removes session from 
 
 string Session::getUsername(){
   return this->username;
+}
+
+int Session:getPort(){
+  return this->port;
+}
+
+void Session::setPort(int port){
+  this->port = port;
 }

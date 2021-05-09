@@ -45,8 +45,12 @@ int ClientComms::connectToServer(){ //tries to establish connetion to server, re
 int ClientComms::login(){
   sendMessage(LOGIN,this->username);
   packet* pkt = readMessage();
-  if(pkt->type == SUCCESS)
-    return 0;
+  if(pkt->type == SUCCESS){
+    sendMessage(BACKUP_PORT,this->backup_port);
+    pkt = readMessage();
+    if(pkt->type == SUCCESS)
+      return 0;
+  }
   else
   {
     return -1;
@@ -79,7 +83,11 @@ void ClientComms::connectionInterrupted(){ //closes connection between client an
     return;
     }
   else{
-    attemptReconnect();
+    //pthread_mutex_lock(&(this->reconnecting_mutex));
+    //while(this->not_reconnected){//waiting for reconnect
+    //  pthread_cond_wait(&(this->reconnecting_cond),&(this->reconnecting_mutex));
+    return ;
+    };
     return;
   }
 }
@@ -94,42 +102,10 @@ void ClientComms::init(char* username, char* hostname, int port){
   this->hostname = hostname;
   this->port = port;
   this->seqnum = 0;
+  this->seqack = 0;
+  this->numHigherAcks = 0;
+
+
+//  pthread_mutex_init(&(this->reconnecting_mutex),NULL);
+  //pthread_cond_init(&(this->reconnecting_cond), NULL);
 }
-
-/*
-int main(int argc, char *argv[])
-{
-  if (argc < 3) {
-  fprintf(stderr,"usage %s hostname\n", argv[0]);
-  exit(0);
-  }
-  int port = atoi(argv[3]);
-  ClientComms manager(argv[1],argv[2],port);
-  char *buffer = new char[256];
-  int n;
-  if(manager.connectToServer() != 0)
-    cout << "Error connecting to server\n";
-
-  if(manager.login() == 0){
-    cout << "Login successful" << endl << "Welcome, " << argv[1];
-    manager.setActive(true);
-    }
-  else{
-    cout << "Login error, disconnect one device to continue";
-    manager.closeSocket();
-    return -1;
-  }
-  buffer[0] = 'c';
-  while(buffer[0] != 'A'){
-    printf("Enter the message: ");
-    bzero(buffer, 256);
-    fgets(buffer, 256, stdin);
-    manager.sendMessage(SEND,buffer);
-    manager.readMessage();
-
-  }
-
-	manager.connectionInterrupted();
-  return 0;
-}
-*/

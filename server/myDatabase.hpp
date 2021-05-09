@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <sstream>
 #include <iostream>
 #include <fstream>
 #include <list>
@@ -13,6 +14,8 @@ public:
     list<Profile> data;
     fstream f_followers;
     fstream f_profiles;
+    fstream received_notifs_f;
+    fstream pending_notifs_f;
     bool init;
 
     MyDatabase();
@@ -20,8 +23,8 @@ public:
     Profile* getProfile(string name);
     bool ExistsProfile(string id);
     int GetActiveSessionsNumber(string id);
-    void AddSessionCount(string id);
-    void SubtractSessionCount(string id);
+    void AddSessionCount(string id,string host, int port);
+    void SubtractSessionCount(string id,string host, int port);
     void AddFollower(string profile, string follow);
     void AddFollowing(string profile, string follow);
     list<string> GetFollowers(string profile);
@@ -44,7 +47,11 @@ public:
     void initFollowers();
     void WriteFollower(string follower, string followed);
     void initDatabase();
-
-
-
+    void RemovePendingsFile(PendingNotification* pendingstoRemove,PendingNotification* pendingsToUpdate,int* last_read_by, int removeSize,int updateSize, string profile);
+    void WriteReceivedFile(string username,ReceivedNotification rn);
+    void WritePendingFile(string follower,PendingNotification pn);
+    void RemoveReceivedFromFile(int idToRemove);
+    void initPendingNotif();
+    void initReceivedNotif();
+    void UpdateProfileInFile(string profile, string oldhost, int oldport, string newhost = "-1",int newport = -1);
 };

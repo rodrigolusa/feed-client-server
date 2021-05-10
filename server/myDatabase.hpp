@@ -6,6 +6,7 @@
 #include <list>
 #include "profile.hpp"
 #include <pthread.h>
+#include "../common/basiccomm.hpp"
 
 using namespace std;
 
@@ -37,7 +38,7 @@ public:
     bool AddPendingNotificationInFollower(string follower, PendingNotification pn);
     void RemoveReceivedNotifications(string profile, int id);
     void RemovePendingNotifications(string profile, string who, int id);
-    void WriteDatabase(string file);
+    void PrintDatabase();
     void ReadDatabase(string file);
     int GetFollowersNumber(string profile);
     int GetReadings(string profile);
@@ -56,3 +57,4 @@ public:
     void UpdateProfileInFile(string profile, string oldhost, int oldport, string newhost = "-1",int newport = -1);
 };
 extern MyDatabase database;
+extern int notificationId;

@@ -39,7 +39,18 @@ void* acceptClients(void* args){
 			}
 			else{
 				pthread_t new_thread;
-				pthread_create(&new_thread, NULL, NotificationProducer, new_session);
+				Session_Replica* info = new Session_Replica();
+				string backup(new_session->getUsername());
+				backup.append(" ");
+				backup.append(new_session->getHostname());
+				backup.append(" ");
+				backup.append(to_string(new_session->getPort()));
+
+	      replica->sendmessagetoAllReplicas(LOGIN,(char*)backup.c_str());
+				database.UpdateProfileInFile(new_session->getUsername(),to_string(-1),-1,new_session->getHostname(),new_session->getPort());
+				info->replica = replica;
+				info->session = new_session;
+				pthread_create(&new_thread, NULL, NotificationProducer, info);
 				pthread_detach(new_thread);
 				}
 

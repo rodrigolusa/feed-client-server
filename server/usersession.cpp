@@ -19,6 +19,10 @@ int Session::attemptLogin(){
     return -1;
     }
 
+    const char* port_data = new char[pkt->length];
+    port_data = pkt->_payload;
+    string port(port_data);
+    this->port = stoi(port);
 
   //Verifica se o perfil ja existe na nase de dados, senão o adiciona.
   if(!database.ExistsProfile(name)){
@@ -31,6 +35,7 @@ int Session::attemptLogin(){
     pthread_mutex_lock(&(prof->logincontrol_mutex));//locks critical session so 2 clients can't login with same user simultaneously
     if(database.GetActiveSessionsNumber(name) < 2){ //verifica se existe sessao disponivel, senão desativa o cliente (não sei se esta correto)
       database.AddSessionCount(name,this->hostname,this->port);
+
     pthread_mutex_unlock(&(prof->logincontrol_mutex));
     }
     else{
@@ -51,7 +56,6 @@ int Session::attemptLogin(){
 void Session::flushsendingQueue(){
   list<QueuedMessage>::iterator it;
   for(it = sendingQueue.begin(); it!= sendingQueue.end(); it++){
-    cout << "cheguei no flush de sending";
     sendMessage(SEND_NAME,it->username, it->timestamp);
     sendMessage(SEND_DATA,it->message, it->timestamp);
   }
@@ -80,3 +84,7 @@ int Session::getPort(){
 void Session::setPort(int port){
   this->port = port;
 }
+
+  string Session::getHostname(){
+    return this->hostname;
+  }

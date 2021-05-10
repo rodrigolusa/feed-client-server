@@ -24,6 +24,14 @@
 
 using namespace std;
 
+class Session;
+class replicaManager;
+
+typedef struct{
+	replicaManager* replica;
+	Session* session;
+}Session_Replica;
+
 class primaryManager{
 private:
 	int port;

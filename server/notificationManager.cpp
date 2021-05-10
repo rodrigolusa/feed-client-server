@@ -1,16 +1,27 @@
 #include "notificationManager.hpp"
 
 using namespace std;
-void print(list<PendingDelayed> const &list)
+void print(list<ReceivedNotification> const &list)
 {
     for (auto const& i: list) {
-        cout << i.follower << endl;
+        cout << i.id << endl;
     }
 }
 
 
+void commitChanges(ReceivedNotification rn, list<PendingDelayed> pending, string username, replicaManager* replica){
 
-int notificationId = 0;
+    database.WriteReceivedFile(username,rn);
+    string header(username);
+    header.append(" ");
+    header.append(to_string(rn.id));
+    replica->sendmessagetoAllReplicas(SEND_HEADER,(char*)header.c_str(),rn.timestamp);
+    replica->sendmessagetoAllReplicas(SEND_DATA,(char*)rn.message.c_str());
+
+}
+
+
+
 void ClearNotifications(string profile, int port){
   list<Profile>::iterator it;
   for(it = database.data.begin(); it != database.data.end(); it ++){
@@ -55,7 +66,9 @@ bool islistEmptyForClient(list<PendingNotification> notf_list, int port){
   }
 
 void* NotificationConsumer(void* arg){
-    Session *user = *(Session**) &arg;
+    Session_Replica* info = (Session_Replica*) arg;
+    Session* user = info->session;
+    replicaManager* replica = info->replica;
     Profile* prof = database.getProfile(user->getUsername());
     while(user->isActive()){
       pthread_mutex_lock(&(prof->pendingnotification_mutex));//blocking behavior for consuming notification while list is empty
@@ -107,21 +120,24 @@ list<PendingDelayed> getPendingForFollowers(string profile, PendingNotification 
 
 void* NotificationProducer(void* arg){
 
-	Session *user = *(Session**) &arg;
+  Session_Replica* info = (Session_Replica*) arg;
+	Session* user = info->session;
+  replicaManager* replica = info->replica;
 	cout << "User " << user->getUsername() << " logged in\n";
 	string name = user->getUsername();
   pthread_t new_thread2;
-  pthread_create(&new_thread2, NULL, NotificationConsumer, user);
+  pthread_create(&new_thread2, NULL, NotificationConsumer, info);
   pthread_detach(new_thread2);
   list<PendingDelayed> pending_list;
   list<ReceivedNotification> received_list;
-  set<int> notifications_ids;
+  list<ReceivedNotification> finished_inserting;
+    for(int i = 0; i < MAX_NUM_REPLICAS-1; i++)
+      cout << replica->connection_ports[i] << endl;
   Profile* userprofile = database.getProfile(name);
   //make socket non-blocking
   fcntl(user->getSocket(), F_SETFL, fcntl(user->getSocket(), F_GETFL, 0) | O_NONBLOCK);
 
 	while(user->isActive()){
-
 
 		packet* pkt = user->readMessage();
 
@@ -129,7 +145,7 @@ void* NotificationProducer(void* arg){
 
 			ReceivedNotification rn;
 			PendingNotification pn;
-      if(pkt == NULL && pending_list.empty() && received_list.empty()){
+      if(pkt == NULL){
         usleep(10);
       }
       else{
@@ -149,39 +165,31 @@ void* NotificationProducer(void* arg){
 				rn.message = pkt->_payload;
 				rn.size = pkt->length;
 				rn.pendingFollowersToReceive = database.GetFollowersNumber(name);
-        if(userprofile->AddReceivedNotification(rn) != true){//if we cant add to received notification, add to list
-				      received_list.push_back(rn);
-              notifications_ids.insert(rn.id);
-            }
 				pn.profileId = name;
 				pn.notificationId = notificationId;
-				pending_list.splice(pending_list.end(),getPendingForFollowers(name,pn)); //adds new pending notifications that we need to insert
+        commitChanges(rn,pending_list,name,replica);
+				//pending_list.splice(pending_list.end(),getPendingForFollowers(name,pn)); //adds new pending notifications that we need to insert
         cout << "mensagem recebida foi " << pkt->_payload << getDate(pkt->timestamp) << endl;
 
 				//user->sendMessage(SEND_NAME,(char*)name.c_str());
 				//user->sendMessage(SEND_DATA,(char*)pkt->_payload);
 				break;
 			default:
-        cout << "entrei no default" << endl;
         user->sendMessage(ERROR);
 				break;
 			}
       if (pkt != NULL)
         delete pkt;
+      }
     }
-
-      list<ReceivedNotification>::iterator  firstToRemoveReceiv = std::remove_if(received_list.begin(), received_list.end(), [&userprofile](ReceivedNotification notif){ return userprofile->AddReceivedNotification(notif); });
-      list<PendingDelayed>::iterator firstToRemovePend = std::remove_if(pending_list.begin(), pending_list.end(), [&](PendingDelayed notif){ return database.AddPendingNotificationInFollower(notif.follower,notif.pn); });
-
-
-      pending_list.erase(firstToRemovePend, pending_list.end());
-      received_list.erase(firstToRemoveReceiv, received_list.end());
-
-
-
-
-      //insert pending notifications from list
-  }
 	}
+
+  string backup(user->getUsername());
+  backup.append(" ");
+  backup.append(user->getHostname());
+  backup.append(" ");
+  backup.append(to_string(user->getPort()));
+  replica->sendmessagetoAllReplicas(LOGOUT,(char*)backup.c_str());
+  database.UpdateProfileInFile(user->getUsername(),user->getHostname(),user->getPort());
 	pthread_exit(NULL);
 }

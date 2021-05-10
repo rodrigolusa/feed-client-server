@@ -22,7 +22,7 @@ typedef struct __packet{
 
 
 enum CMDS{
-  FOLLOW,SEND_NAME,SEND_DATA,SEND_UNNAMED,LOGIN,LOGOUT, SUCCESS,ERROR,BACKUP_PORT
+  FOLLOW,SEND_NAME,SEND_DATA,SEND_UNNAMED,LOGIN,LOGOUT, SUCCESS,ERROR,BACKUP_PORT, SEND_HEADER, BACKUP_INFO
 };
 
 class BasicComm{
@@ -37,8 +37,8 @@ protected:
 	uint16_t seqack;
 	uint16_t numHigherAcks;
 public:
-  int sendMessage(uint16_t cmd,  char* data = NULL, char* timestamp = NULL, int sckt = -1);
-  packet* readMessage(int sckt = -1);
+  int sendMessage(uint16_t cmd,  char* data = NULL, char* timestamp = NULL);
+  packet* readMessage();
 	void setActive(bool value);
 	bool isActive();
 	int getSocket();

@@ -26,6 +26,7 @@ public:
   void flushsendingQueue();
   void setPort(int port);
   int getPort();
+  string getHostname();
 
   Session(int socket,string hostname){
     this->sckt = socket;

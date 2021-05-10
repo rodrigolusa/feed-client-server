@@ -91,7 +91,7 @@ int Profile::GetFollowersNumber(){
 }
 
 bool Profile::AddReceivedNotification(ReceivedNotification r){
-    if(pthread_mutex_trylock(&(this->receivenotification_mutex)) == 0){
+    if(pthread_mutex_lock(&(this->receivenotification_mutex)) == 0){
     list<ReceivedNotification>::iterator it;
     it = receivedNotifications.end();
     receivedNotifications.insert(it, r);

@@ -21,14 +21,15 @@ int main(int argc, char *argv[]){
       }
       //primary.finalize();
     }
-    else
+    else{
+        fprintf(stderr,"Sou uma replica\n");
       do{
           usleep(100000);
-          fprintf(stderr,"Sou uma replica");
+
         //replica.receiveMessages();
 
     }while(replica.isPrimary() != true);
-
+    }
   }
 
 }

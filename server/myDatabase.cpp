@@ -4,6 +4,7 @@
 using namespace std;
 
 MyDatabase database;
+int notificationId = 0;
 MyDatabase::MyDatabase(){
 };
 
@@ -20,8 +21,9 @@ void MyDatabase::UpdateProfileInFile(string profile, string oldhost, int oldport
   f_profiles.open("profiles.txt",fstream::in); //opens for appending at the end of file
   string id,port,host, dataToWrite,line;
   fstream temp;
-  temp.open("temp.txt",fstream::out);
+  temp.open("temp_profiles.txt",fstream::out);
   dataToWrite.append(profile);
+  dataToWrite.append(" ");
   while(getline(f_profiles,line)){
   stringstream lineStream(line);
   lineStream >> id;
@@ -65,8 +67,8 @@ void MyDatabase::UpdateProfileInFile(string profile, string oldhost, int oldport
   }
   f_profiles.close();
   temp.close();
-  remove("f_profiles.txt");
-  rename("temp.txt","f_profiles.txt");
+  remove("profiles.txt");
+  rename("temp_profiles.txt","profiles.txt");
 }
 
 
@@ -128,6 +130,7 @@ void MyDatabase::AddSessionCount(string id,string host, int port){
     list<Profile>::iterator it;
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == id){
+          if(port != -1)
             it->activeSessions++;
             for(int i = 0; i < 2;i++){
               if(it->backup_ports[i] == -1){
@@ -146,6 +149,7 @@ void MyDatabase::SubtractSessionCount(string id,string host,int port){
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == id){
             it->activeSessions--;
+            UpdateProfileInFile(id,host,port);
             for(int i = 0; i < 2;i++){
               if(it->backup_ports[i] == port){
                 it->backup_ports[i] = -1;
@@ -272,7 +276,7 @@ bool MyDatabase::AddPendingNotificationInFollower(string follower, PendingNotifi
     list<Profile>::iterator it;
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == follower){
-            if(pthread_mutex_trylock(&(it->pendingnotification_mutex)) == 0){
+            if(pthread_mutex_lock(&(it->pendingnotification_mutex)) == 0){
               it->AddPendingNotification(pn);
               pthread_mutex_unlock(&(it->pendingnotification_mutex));
               pthread_cond_broadcast(&(it->not_empty));
@@ -306,10 +310,15 @@ void MyDatabase::RemovePendingNotifications(string profile, string who, int id){
 }
 
 //Metodo utilizado para teste
-void MyDatabase::WriteDatabase(string file){
+void MyDatabase::PrintDatabase(){
     list<Profile>::iterator it;
     for(it = data.begin(); it!= data.end(); it++){
         cout << "Perfil: " << it->id << endl;
+        cout << "Host1: " << it->backup_hosts[0] << " ";
+        cout << "Port1: " << it->backup_ports[0] << endl;
+        cout << "Host2: " << it->backup_hosts[1] << " ";
+        cout << "Port2: " << it->backup_ports[1] << endl;
+
 
         cout << "  Seguidores: " << endl;
         list<string>::iterator it_seguidores;
@@ -320,7 +329,7 @@ void MyDatabase::WriteDatabase(string file){
         cout << "  Notificações recebidas: " << endl;
         list<ReceivedNotification>::iterator it_notifications;
         for(it_notifications = it->receivedNotifications.begin(); it_notifications != it->receivedNotifications.end(); it_notifications++){
-            cout << "    " << it_notifications->id << ", " << it_notifications->timestamp << ", " << it_notifications->message << ", " << it_notifications->size << ", " << it_notifications->pendingFollowersToReceive << endl;
+            cout << "    " << it_notifications->id << ", " << getDate(it_notifications->timestamp) << ", " << it_notifications->message << ", " << it_notifications->size << ", " << it_notifications->pendingFollowersToReceive << endl;
         }
 
         cout << "  Notificações pendentes para: " << endl;
@@ -353,24 +362,29 @@ void MyDatabase::WriteProfile(string id){
   f_profiles.close();
 }
 void MyDatabase::initProfiles(){
-  string profile;
-  f_profiles.open("profiles.txt",fstream::in);
-  while(f_profiles >> profile){
-    AddProfile(profile);
+  string profile,host1,host2, port1,port2, line;
+
+  while(getline(f_profiles,line)){
+  stringstream lineStream(line);
+  lineStream >> profile;
+  lineStream >> host1;
+  lineStream >> port1;
+  lineStream >> host2;
+  lineStream >> port2;
+  AddProfile(profile);
+  AddSessionCount(profile,host1,stoi(port1));
+  AddSessionCount(profile,host2,stoi(port2));
   }
-  f_profiles.close();
 }
 
 void MyDatabase::initFollowers(){
   string follower;
   string followed;
-  f_followers.open("followers.txt",fstream::in);
   while(f_followers >> follower){
     f_followers >> followed;
     AddFollowing(follower,followed);
     AddFollower(followed,follower);
   }
-    f_followers.close();
 }
 void MyDatabase::WriteFollower(string follower, string followed){
   f_followers.open("followers.txt",fstream::app);
@@ -396,6 +410,7 @@ void MyDatabase::WritePendingFile(string follower, PendingNotification pn){
 }
 
 void MyDatabase::WriteReceivedFile(string username, ReceivedNotification rn){
+  received_notifs_f.open("received-notif.txt",fstream::app);
   string dataToWrite(to_string(rn.id));
   dataToWrite.append(" ");
   dataToWrite.append(rn.timestamp);
@@ -409,7 +424,7 @@ void MyDatabase::WriteReceivedFile(string username, ReceivedNotification rn){
   dataToWrite.append(username);
   dataToWrite.append("\n");
   received_notifs_f << dataToWrite;
-  received_notifs_f.flush();
+  received_notifs_f.close();
 }
 
 
@@ -418,8 +433,8 @@ void MyDatabase::RemoveReceivedFromFile(int idToRemove){
   fstream temp;
   string line,id, dataToWrite;
 
-  received_notifs_f.open("received_notif.txt",fstream::in);
-  temp.open("temp.txt",fstream::out);
+  received_notifs_f.open("received-notif.txt",fstream::in);
+  temp.open("temp-received.txt",fstream::out);
 
   while(getline(received_notifs_f,line)){
   stringstream lineStream(line);
@@ -435,8 +450,8 @@ void MyDatabase::RemoveReceivedFromFile(int idToRemove){
   }
   received_notifs_f.close();
   temp.close();
-  remove("received_notif.txt");
-  rename("temp.txt","received_notif.txt");
+  remove("received-notif.txt");
+  rename("temp-received.txt","received-notif.txt");
 }
 
 void MyDatabase::RemovePendingsFile(PendingNotification* pendingstoRemove,PendingNotification* pendingsToUpdate,int* last_read_by, int removeSize,int updateSize, string profile){
@@ -444,8 +459,8 @@ void MyDatabase::RemovePendingsFile(PendingNotification* pendingstoRemove,Pendin
   string line,id, dataToWrite, username,follower;
   bool removeBool = false;
   bool update = false;
-  pending_notifs_f.open("pending_notif.txt",fstream::in);
-  temp.open("temp.txt",fstream::out);
+  pending_notifs_f.open("pending-notif.txt",fstream::in);
+  temp.open("temp-notif.txt",fstream::out);
 
   while(getline(pending_notifs_f,line)){
   stringstream lineStream(line);
@@ -486,8 +501,8 @@ void MyDatabase::RemovePendingsFile(PendingNotification* pendingstoRemove,Pendin
   }
   pending_notifs_f.close();
   temp.close();
-  remove("pending_notif.txt");
-  rename("temp.txt","pending_notif.txt");
+  remove("pending-notif.txt");
+  rename("temp-notif.txt","pending-notif.txt");
 }
 
 
@@ -517,6 +532,7 @@ void MyDatabase::initReceivedNotif(){
   string size;
   string pendingFollowersToReceive;
   string username;
+  int idNum = 0;
   while(received_notifs_f >> id){
     received_notifs_f >> timestamp;
     received_notifs_f >> message;
@@ -531,16 +547,18 @@ void MyDatabase::initReceivedNotif(){
     rn.size=  stoi(size);
     rn.pendingFollowersToReceive = stoi(pendingFollowersToReceive);
 
+    idNum = rn.id;
 
     AddReceivedNotifications(username,rn);
   }
+  notificationId = idNum; //last notification id is the highest.
 }
 void MyDatabase::initDatabase(){
   this->init = true;
   f_profiles.open("profiles.txt",fstream::in);//opens for reading and loading database
   f_followers.open("followers.txt",fstream::in);
-  received_notifs_f.open("received_notif.txt",fstream::in);
-  pending_notifs_f.open("pending_notif.txt",fstream::in);
+  received_notifs_f.open("received-notif.txt",fstream::in);
+  pending_notifs_f.open("pending-notif.txt",fstream::in);
   initProfiles();
   initFollowers();
   initPendingNotif();
@@ -550,5 +568,5 @@ void MyDatabase::initDatabase(){
   received_notifs_f.close();
   pending_notifs_f.close();
   this->init = false;
-  WriteDatabase("");
+  PrintDatabase();
 }

@@ -73,11 +73,9 @@ packet* BasicComm::deserializeData(char* serializedData){
 }
 
 
-int BasicComm::sendMessage(uint16_t cmd, char* data, char* timestamp,int sckt){
+int BasicComm::sendMessage(uint16_t cmd, char* data, char* timestamp){
   int n;
   int msgtype = cmd;
-  if(sckt == -1)
-    sckt = this->sckt;
   packet* pkt = new packet;
   pkt->type = cmd;
   pkt->seqn = this->seqnum + 1;
@@ -93,7 +91,7 @@ int BasicComm::sendMessage(uint16_t cmd, char* data, char* timestamp,int sckt){
   }
   pkt->_payload = data;
   char* serializedPkt = serializeData(pkt);
-  n = write(sckt, serializedPkt, maxPacketSize);
+  n = write(this->sckt, serializedPkt, maxPacketSize);
   if (n < 0){
 	 cout << "Error sending message" << endl;
    this->active = false;
@@ -103,15 +101,14 @@ int BasicComm::sendMessage(uint16_t cmd, char* data, char* timestamp,int sckt){
   return 0;
 }
 
-packet* BasicComm::readMessage(int sckt){
+packet* BasicComm::readMessage(){
   int n;
-  if(sckt == -1)
-    sckt = this->sckt;
+
   char* serialized = new char[maxPacketSize];
   bzero(serialized,maxPacketSize);
   int dataRecv = 0;
   while(dataRecv < maxPacketSize){
-    n = read(sckt, serialized+dataRecv, maxPacketSize);
+    n = read(this->sckt, serialized+dataRecv, maxPacketSize);
     if (n < 0){
       delete[] serialized;
       return NULL;

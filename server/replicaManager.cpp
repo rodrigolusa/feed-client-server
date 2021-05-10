@@ -5,11 +5,11 @@ bool replicaManager::isPrimary(){
 
 int replicaManager::init(int port){
   database.initDatabase();
-  this->comms = new ReplicaComms();
   this->is_primary = false;
   for(int i = 0; i < MAX_NUM_REPLICAS-1; i++){
     this->connection_sockets[i] = -1;
     this->connection_ports[i] = -1;
+    this->comms[i] = new ReplicaComms();
   }
 
   this->listen_socket = initListeningSocket(port);
@@ -30,9 +30,12 @@ int replicaManager::init(int port){
       else{
         int socket = createSocket();
           if(connectToSv(info->hostname,info->port,socket)){
-                this->comms->sendMessage(PORT,(char*)to_string(this->port).c_str(),NULL,socket);
+                this->comms[idx]->init(socket,this);
+                this->comms[idx]->sendMessage(PORT,(char*)to_string(this->port).c_str(),NULL);
                 this->connection_sockets[idx] = socket;
                 this->connection_ports[idx] = info->port;
+                pthread_t new_thread2;
+                pthread_create(&new_thread2, NULL, readMessageFromReplica, this->comms[idx]);
                 idx++;
               }
               else{
@@ -48,10 +51,11 @@ int replicaManager::init(int port){
 
   int maxport = this->port;
   for(int i = 0; i < MAX_NUM_REPLICAS-1;i++){
-    if(this->port < connection_ports[i])
+    if(maxport < connection_ports[i]){
+      this->leader_socket = connection_sockets[i];
       maxport =  connection_ports[i];
-        fprintf(stderr,"%d\n",connection_ports[i]);
     }
+  }
     this->leader_port = maxport;
 
     if(this->port == maxport){ //if this replica has the highest ID, announce new leader and become primary.
@@ -59,6 +63,7 @@ int replicaManager::init(int port){
       this->is_primary = true;
     }
   return 0;
+
 }
 
 
@@ -76,6 +81,39 @@ bool replicaManager::GetServerFromFile(ServerInfo* info){
 
 }
 
+
+void replicaManager::addNotificationToBackup(string profile,int id, char* timestamp, packet* pkt ){
+
+    ReceivedNotification rn;
+    PendingNotification pn;
+
+    if(id > notificationId)
+      notificationId = id;
+
+    Profile* prof = database.getProfile(profile);
+    rn.id = id;
+    rn.timestamp = timestamp;
+    rn.message = pkt->_payload;
+    rn.size = pkt->length;
+    rn.pendingFollowersToReceive = database.GetFollowersNumber(profile);
+    prof->AddReceivedNotification(rn); // dont need to wait for mutex, already guaranteed we will get it(serialized).
+    pn.profileId = profile;
+    pn.notificationId = id;
+    database.AddPendingNotifications(profile,pn);
+
+    database.PrintDatabase();
+}
+
+
+
+
+
+void replicaManager::announceCoordinator(){
+
+  return;
+}
+
+
 void* acceptReplicas(void* args){
   replicaManager* replica = (replicaManager*) args;
 
@@ -89,31 +127,65 @@ void* acceptReplicas(void* args){
     continue;
   }
 
-  packet* pkt = replica->comms->readMessage(newsockfd);
-  const char* port = new char[pkt->length];
-  port = pkt->_payload;
 
   bool foundSpot = false;
-  //dont forget mutex here
+
   for(int i = 0; i < MAX_NUM_REPLICAS-1;i++){
     if(replica->connection_sockets[i] == -1){
       replica->connection_sockets[i] = newsockfd;
+      replica->comms[i]->init(newsockfd,replica);
+      packet* pkt = replica->comms[i]->readMessage();
+      while(pkt == NULL)
+        pkt = replica->comms[i]->readMessage();
+      const char* port = new char[pkt->length];
+      port = pkt->_payload;
       replica->connection_ports[i] = atoi(port);
+      pthread_t new_thread;
+      pthread_create(&new_thread, NULL, readMessageFromReplica, replica->comms[i]);
       foundSpot = true;
+      cout << "Replica with port " << atoi(port) << "connected" << endl;
       break;
     }
   }
 
   if(!foundSpot)
     fprintf(stderr,"Maximum replica capacity reached, can't accept a new one\n");
-  else
-    cout << "Replica with port " << atoi(port) << "connected" << endl;;
+
+    }
+  }
+
+void replicaManager::sendmessagetoAllReplicas(uint16_t cmd, char* data, char* timestamp){
+
+  for(int i = 0; i < MAX_NUM_REPLICAS-1;i++){
+    if(this->comms[i]->isActive()){
+      pthread_mutex_lock(&(this->comms[i]->sendmessage_mutex));
+      this->comms[i]->sendMessage(cmd,data);
+      pthread_mutex_unlock(&(this->comms[i]->sendmessage_mutex));
+
+    }
+    else
+      continue;
+    }
+}
+
+void replicaManager::addSessionToBackup(string username, string hostname, int port){
+  if(!database.ExistsProfile(username)){
+    Profile prof(username);
+    database.AddProfile(prof);
+    database.AddSessionCount(username,hostname,port);
+    cout << "novo usuario " << username << " no host " << hostname << "e porta " << port << endl;
+  }
+  else{
+    Profile* prof = database.getProfile(username);
+    database.AddSessionCount(username,hostname,port);
+
+    cout << username << "logado no host " << hostname << "e porta " << port << endl;
   }
 }
 
 
-
-void replicaManager::announceCoordinator(){
-
-  return;
+void replicaManager::removeSessionFromBackup(string username, string hostname, int port){
+  Profile* prof = database.getProfile(username);
+  database.SubtractSessionCount(username,hostname,port);
+  cout << username << "deslogando no host " << hostname << "e porta " << port << endl;
 }

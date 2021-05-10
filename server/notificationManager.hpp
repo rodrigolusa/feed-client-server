@@ -12,6 +12,7 @@
 #include "receivedNotification.hpp"
 #include "pendingNotification.hpp"
 #include "usersession.hpp"
+#include "replicaManager.hpp"
 #include <fcntl.h>
 #include <set>
 typedef struct{
@@ -24,3 +25,4 @@ void ClearNotifications(string profile);
 void* NotificationConsumer(void* arg);
 void* NotificationProducer(void* arg);
 bool islistEmptyForClient(list<PendingNotification> notf_list, int socket);
+void commitChanges(ReceivedNotification rn, list<PendingDelayed>, string username, replicaManager* replica);

@@ -125,6 +125,7 @@ void* NotificationProducer(void* arg){
   replicaManager* replica = info->replica;
 	cout << "User " << user->getUsername() << " logged in\n";
 	string name = user->getUsername();
+  string follow_data;
   pthread_t new_thread2;
   pthread_create(&new_thread2, NULL, NotificationConsumer, info);
   pthread_detach(new_thread2);
@@ -157,6 +158,11 @@ void* NotificationProducer(void* arg){
 			case FOLLOW:
 				database.AddFollowing(name, pkt->_payload);
 				database.AddFollower(pkt->_payload, name);
+        follow_data.append(string(pkt->_payload));
+        follow_data.append(" ");
+        follow_data.append(name);
+        replica->sendmessagetoAllReplicas(FOLLOW,(char*)follow_data.c_str());
+        follow_data.clear();
 				cout << "pedido de follow " << pkt->_payload << getDate(pkt->timestamp) << endl;
 				break;
 			case SEND_UNNAMED:

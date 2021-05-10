@@ -5,9 +5,6 @@
 #include <sstream>
 using namespace std;
 
-enum REPLICA_CMDS{
-KEEP_ALIVE,PORT
-};
 
 class replicaManager;
 

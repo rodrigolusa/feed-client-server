@@ -114,6 +114,7 @@ packet* BasicComm::readMessage(){
       return NULL;
     }
     if (n == 0){
+      delete[] serialized;
       connectionInterrupted();
       return NULL;
     }

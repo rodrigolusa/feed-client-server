@@ -371,6 +371,7 @@ void MyDatabase::initProfiles(){
   lineStream >> port1;
   lineStream >> host2;
   lineStream >> port2;
+  cout << host2 << endl;
   AddProfile(profile);
   AddSessionCount(profile,host1,stoi(port1));
   AddSessionCount(profile,host2,stoi(port2));

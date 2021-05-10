@@ -39,6 +39,7 @@ public:
   void sendmessagetoAllReplicas(uint16_t cmd, char* data=NULL, char* timestamp=NULL);
   void addSessionToBackup(string username, string hostname, int port);
   void removeSessionFromBackup(string username, string hostname, int port);
+  void addFollowtoBackup(string followed,string follower);
   void addNotificationToBackup(string profile,int id, char* timestamp, packet* pkt );
 };
 

@@ -23,7 +23,7 @@ void* readMessageFromReplica(void* args){
   comms->setActive(true);
   replicaManager* replica = comms->replica;
     cout << comms->getSocket() << endl;
-  string username,line,id, loginname, hostname, port;
+  string username,line,id, loginname, hostname, port, followed,follower;
   char* timestamp;
   stringstream lineStream;
   const char* header;
@@ -90,6 +90,22 @@ void* readMessageFromReplica(void* args){
           line.clear();
           replica->removeSessionFromBackup(loginname,hostname,stoi(port));
           break;
+
+          case FOLLOW:
+          header = new char[pkt->length];
+          header = pkt->_payload;
+          line = string(header);
+          delete[] header;
+          lineStream << line;
+          lineStream >> followed;
+          lineStream >> follower;
+          lineStream.str("");
+          lineStream.clear();
+          line.clear();
+          replica->addFollowtoBackup(followed,follower);
+
+
+
 
         }
 

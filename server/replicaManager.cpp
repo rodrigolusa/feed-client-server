@@ -189,3 +189,9 @@ void replicaManager::removeSessionFromBackup(string username, string hostname, i
   database.SubtractSessionCount(username,hostname,port);
   cout << username << "deslogando no host " << hostname << "e porta " << port << endl;
 }
+
+void replicaManager::addFollowtoBackup(string followed, string follower){
+  database.AddFollowing(follower, followed);
+  database.AddFollower(followed, follower);
+  cout << "Pedido de follow de " << follower << " para seguir " << followed << endl;
+}

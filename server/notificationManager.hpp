@@ -21,8 +21,9 @@ typedef struct{
 }PendingDelayed;
 list<PendingDelayed> getPendingForFollowers(string profile, PendingNotification pn);
 void SendNotification(string toProfile, ReceivedNotification rn);
-void ClearNotifications(string profile);
+void ClearNotifications(string profile, int port,replicaManager* replica);
 void* NotificationConsumer(void* arg);
 void* NotificationProducer(void* arg);
 bool islistEmptyForClient(list<PendingNotification> notf_list, int socket);
 void commitChanges(ReceivedNotification rn, list<PendingDelayed>, string username, replicaManager* replica);
+void findNotificationsToRemove(string profile,int port);

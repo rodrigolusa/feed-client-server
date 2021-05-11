@@ -9,6 +9,35 @@ void print(list<ReceivedNotification> const &list)
 }
 
 
+void findNotificationsToRemove(string profile, int port){
+
+  Profile* prof = database.getProfile(profile);
+  list<PendingNotification>::iterator it;
+  list<PendingNotification> pending_list;
+  int removeSize = 0;
+  int rmidx = 0;
+
+  pending_list = prof->pendingNotifications;
+  removeSize = pending_list.size();
+  PendingNotification remove_vec[removeSize];
+
+  for(it = pending_list.begin();it != pending_list.end();it++){
+        prof = database.getProfile(it->profileId);
+        pthread_mutex_lock(&(prof->receivenotification_mutex));
+        ReceivedNotification* notif = database.GetReceivedNotification(it->profileId,it->notificationId);
+        pthread_mutex_unlock(&(prof->receivenotification_mutex));
+        if(notif->pendingFollowersToReceive == 0)
+          database.RemoveReceivedFromFile(notif->id);
+        remove_vec[rmidx] = *it;
+        rmidx++;
+      }
+
+    database.RemovePendingsFile(remove_vec,removeSize,profile);
+  }
+
+
+
+
 void commitChanges(ReceivedNotification rn, list<PendingDelayed> pending, string username, replicaManager* replica){
 
     database.WriteReceivedFile(username,rn);
@@ -17,20 +46,30 @@ void commitChanges(ReceivedNotification rn, list<PendingDelayed> pending, string
     header.append(to_string(rn.id));
     replica->sendmessagetoAllReplicas(SEND_HEADER,(char*)header.c_str(),rn.timestamp);
     replica->sendmessagetoAllReplicas(SEND_DATA,(char*)rn.message.c_str());
+    for (auto const& i: pending) {
+        database.WritePendingFile(i.follower,i.pn);
+    }
 
 }
 
 
 
-void ClearNotifications(string profile, int port){
+void ClearNotifications(string profile, int port,replicaManager* replica){
   list<Profile>::iterator it;
   for(it = database.data.begin(); it != database.data.end(); it ++){
     if(it->id == profile){
       list<PendingNotification>::iterator it_p;
+
+      pthread_mutex_lock(&(replica->isprimary_mutex));
+      if(replica->isPrimary()){//if it's primary, we have to delete notifs from file.
+        findNotificationsToRemove( profile, port);
+      }
+        pthread_mutex_unlock(&(replica->isprimary_mutex));
+
     //  for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
         if(database.GetActiveSessionsNumber(profile) == 2){ //if we only have one session active, we can remove the notification
           //if(it_p->last_read_by != -1 && it_p->last_read_by != socket){
-            it->pendingNotifications.erase(std::remove_if(it->pendingNotifications.begin(), it->pendingNotifications.end(), [&port](PendingNotification notif){ return (notif.last_read_by != port && notif.last_read_by != -1); }), it->pendingNotifications.end());
+            it->pendingNotifications.erase(std::remove_if(it->pendingNotifications.begin(), it->pendingNotifications.end(), [&port](PendingNotification notif){ return (notif.last_read_by != port && notif.last_read_by != -2); }), it->pendingNotifications.end());
           //  it->RemovePendingNotification(it_p->profileId, it_p->notificationId);
 
             for(it_p = it->pendingNotifications.begin(); it_p != it->pendingNotifications.end(); it_p++){
@@ -47,7 +86,7 @@ void ClearNotifications(string profile, int port){
       pthread_mutex_unlock(&(notif_prof->receivenotification_mutex));
       break;
 
-  }
+}
 }
 }
 
@@ -81,18 +120,19 @@ void* NotificationConsumer(void* arg){
         QueuedMessage msg;
         Profile* notif_prof = database.getProfile(it_p->profileId);
         pthread_mutex_lock(&(notif_prof->receivenotification_mutex));
-        ReceivedNotification notif = database.GetReceivedNotification(it_p->profileId,it_p->notificationId);
-        if(it_p->last_read_by != -1)//if it is not -1 nor our socket, then another socket already read it and we can decrease it
-          notif.pendingFollowersToReceive--;
+        ReceivedNotification* notif = database.GetReceivedNotification(it_p->profileId,it_p->notificationId);
+        cout << database.GetActiveSessionsNumber(user->getUsername()) << endl;
+        if(it_p->last_read_by != -2 || (database.GetActiveSessionsNumber(user->getUsername()) == 1))//if it is not -2 nor our socket, then another socket already read it and we can decrease it
+          notif->pendingFollowersToReceive--;
         pthread_mutex_unlock(&(notif_prof->receivenotification_mutex));
         msg.username = (char*)it_p->profileId.c_str();
-        msg.message = (char*)notif.message.c_str();
-        msg.timestamp = notif.timestamp;
+        msg.message = (char*)notif->message.c_str();
+        msg.timestamp = notif->timestamp;
         user->sendingQueue.push_back(msg);
         }
       }
       if(user->isActive())
-        ClearNotifications(user->getUsername(),user->getPort());
+        ClearNotifications(user->getUsername(),user->getPort(),replica);
       pthread_mutex_unlock(&(prof->pendingnotification_mutex));
       if(user->isActive())
         user->flushsendingQueue();
@@ -130,8 +170,6 @@ void* NotificationProducer(void* arg){
   pthread_create(&new_thread2, NULL, NotificationConsumer, info);
   pthread_detach(new_thread2);
   list<PendingDelayed> pending_list;
-  list<ReceivedNotification> received_list;
-  list<ReceivedNotification> finished_inserting;
     for(int i = 0; i < MAX_NUM_REPLICAS-1; i++)
       cout << replica->connection_ports[i] << endl;
   Profile* userprofile = database.getProfile(name);
@@ -162,6 +200,7 @@ void* NotificationProducer(void* arg){
         follow_data.append(" ");
         follow_data.append(name);
         replica->sendmessagetoAllReplicas(FOLLOW,(char*)follow_data.c_str());
+        database.WriteFollower(name,pkt->_payload);
         follow_data.clear();
 				cout << "pedido de follow " << pkt->_payload << getDate(pkt->timestamp) << endl;
 				break;
@@ -173,8 +212,12 @@ void* NotificationProducer(void* arg){
 				rn.pendingFollowersToReceive = database.GetFollowersNumber(name);
 				pn.profileId = name;
 				pn.notificationId = notificationId;
+        pending_list.splice(pending_list.end(),getPendingForFollowers(name,pn)); //adds new pending notifications that we need to insert
+
+        database.AddReceivedNotifications(user->getUsername(),rn);
+        database.AddPendingNotifications(user->getUsername(),pn);
         commitChanges(rn,pending_list,name,replica);
-				//pending_list.splice(pending_list.end(),getPendingForFollowers(name,pn)); //adds new pending notifications that we need to insert
+        pending_list.clear();
         cout << "mensagem recebida foi " << pkt->_payload << getDate(pkt->timestamp) << endl;
 
 				//user->sendMessage(SEND_NAME,(char*)name.c_str());

@@ -5,6 +5,7 @@ bool replicaManager::isPrimary(){
 
 int replicaManager::init(int port){
   database.initDatabase();
+  pthread_mutex_init(&isprimary_mutex,NULL);
   this->is_primary = false;
   for(int i = 0; i < MAX_NUM_REPLICAS-1; i++){
     this->connection_sockets[i] = -1;
@@ -86,7 +87,8 @@ void replicaManager::addNotificationToBackup(string profile,int id, char* timest
 
     ReceivedNotification rn;
     PendingNotification pn;
-
+    list<string>::iterator it;
+    list<string> followers;
     if(id > notificationId)
       notificationId = id;
 
@@ -95,12 +97,22 @@ void replicaManager::addNotificationToBackup(string profile,int id, char* timest
     rn.timestamp = timestamp;
     rn.message = pkt->_payload;
     rn.size = pkt->length;
-    rn.pendingFollowersToReceive = database.GetFollowersNumber(profile);
+    rn.pendingFollowersToReceive = database.GetFollowersNumber(profile) - database.GetActiveFollowersNumber(profile);
     prof->AddReceivedNotification(rn); // dont need to wait for mutex, already guaranteed we will get it(serialized).
     pn.profileId = profile;
     pn.notificationId = id;
     database.AddPendingNotifications(profile,pn);
+    database.PrintDatabase();
+    followers = database.GetFollowers(profile);
 
+    for(it = followers.begin(); it != followers.end();it++)
+    {
+      for(int i = 0; i < 2; i++){
+        prof = database.getProfile(*it);
+          if(prof->backup_ports[i] != -1)//if session is active
+            ClearNotifications(*it,prof->backup_ports[i],this);
+    }
+  }
     database.PrintDatabase();
 }
 

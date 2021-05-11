@@ -108,6 +108,7 @@ void ClientComms::init(char* username, char* hostname, int port){
   this->numHigherAcks = 0;
 
 
+
 //  pthread_mutex_init(&(this->reconnecting_mutex),NULL);
   //pthread_cond_init(&(this->reconnecting_cond), NULL);
 }

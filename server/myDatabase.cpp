@@ -12,8 +12,6 @@ void MyDatabase::AddProfile(Profile d){
     list<Profile>::iterator it;
     it = data.end();
     data.insert(it, d);
-    if(!init)
-      WriteProfile(d.id);
 }
 
 
@@ -149,7 +147,6 @@ void MyDatabase::SubtractSessionCount(string id,string host,int port){
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == id){
             it->activeSessions--;
-            UpdateProfileInFile(id,host,port);
             for(int i = 0; i < 2;i++){
               if(it->backup_ports[i] == port){
                 it->backup_ports[i] = -1;
@@ -175,8 +172,6 @@ void MyDatabase::AddFollowing(string profile, string follow){
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == profile){
             it->AddFollowing(follow);
-            if(!init)
-              WriteFollower(profile,follow);
             break;
         }
     }
@@ -193,6 +188,30 @@ list<string> MyDatabase::GetFollowers(string profile){
     }
     return ret;
 }
+
+int MyDatabase::GetActiveFollowersNumber(string profile){
+    list<string> followers;
+    list<Profile>::iterator it;
+    list<string>::iterator it2;
+    int count = 0;
+    int activeNum;
+    for(it = data.begin(); it!= data.end(); it++){
+        if(it->id == profile){
+            followers = it->GetFollowers();
+            break;
+        }
+    }
+    for(it2 = followers.begin(); it2!= followers.end(); it2++){
+      activeNum  = GetActiveSessionsNumber(*it2);
+      if(activeNum > 0)
+        count++;
+      }
+    return count;
+}
+
+
+
+
 
 void MyDatabase::AddPendingNotifications(string profile, PendingNotification pn){
     list<Profile>::iterator it;
@@ -220,15 +239,15 @@ list<string> MyDatabase::GetFollowing(string profile){
     return ret;
 }
 
-ReceivedNotification MyDatabase::GetReceivedNotification(string profile, int id){
-    ReceivedNotification ret;
+ReceivedNotification* MyDatabase::GetReceivedNotification(string profile, int id){
+    ReceivedNotification* ret;
     list<Profile>::iterator it;
     for(it = data.begin(); it!= data.end(); it++){
         if(it->id == profile){
             list<ReceivedNotification>::iterator it_r;
             for(it_r = it->receivedNotifications.begin(); it_r != it->receivedNotifications.end(); it_r++){
                 if(it_r->id == id){
-                    ret = *it_r;
+                    ret = &(*it_r);
                     break;
                 }
             }
@@ -335,7 +354,7 @@ void MyDatabase::PrintDatabase(){
         cout << "  Notificações pendentes para: " << endl;
         list<PendingNotification>::iterator it_pending;
         for(it_pending = it->pendingNotifications.begin(); it_pending != it->pendingNotifications.end(); it_pending++){
-            cout << "    " << it_pending->profileId << ", " << it_pending->profileId << endl;
+            cout << "    " << it_pending->profileId << endl;
         }
 
         cout << endl;
@@ -346,13 +365,13 @@ void MyDatabase::ReadDatabase(string file){
 
 }
 
-void MyDatabase::WriteProfile(string id){
+void MyDatabase::WriteProfile(string id,string hostname, int port){
   f_profiles.open("profiles.txt",fstream::app); //opens for appending at the end of file
   string dataToWrite(id);
   dataToWrite.append(" ");
-  dataToWrite.append(to_string(-1));
+  dataToWrite.append(hostname);
   dataToWrite.append(" ");
-  dataToWrite.append(to_string(-1));
+  dataToWrite.append(to_string(port));
   dataToWrite.append(" ");
   dataToWrite.append(to_string(-1));
   dataToWrite.append(" ");
@@ -398,6 +417,7 @@ void MyDatabase::WriteFollower(string follower, string followed){
 }
 
 void MyDatabase::WritePendingFile(string follower, PendingNotification pn){
+  pending_notifs_f.open("pending-notif.txt",fstream::app);
   string dataToWrite(follower);
   dataToWrite.append(" ");
   dataToWrite.append(pn.profileId);
@@ -407,7 +427,7 @@ void MyDatabase::WritePendingFile(string follower, PendingNotification pn){
   dataToWrite.append(to_string(pn.last_read_by));
   dataToWrite.append("\n");
   pending_notifs_f << dataToWrite;
-  pending_notifs_f.flush();
+  pending_notifs_f.close();
 }
 
 void MyDatabase::WriteReceivedFile(string username, ReceivedNotification rn){
@@ -455,7 +475,7 @@ void MyDatabase::RemoveReceivedFromFile(int idToRemove){
   rename("temp-received.txt","received-notif.txt");
 }
 
-void MyDatabase::RemovePendingsFile(PendingNotification* pendingstoRemove,PendingNotification* pendingsToUpdate,int* last_read_by, int removeSize,int updateSize, string profile){
+void MyDatabase::RemovePendingsFile(PendingNotification* pendingstoRemove, int removeSize, string profile){
   fstream temp;
   string line,id, dataToWrite, username,follower;
   bool removeBool = false;
@@ -469,28 +489,13 @@ void MyDatabase::RemovePendingsFile(PendingNotification* pendingstoRemove,Pendin
   lineStream >> username;
   lineStream >> id;
   for(int i = 0; i < removeSize; i ++){
-    if(pendingstoRemove[i].profileId == username && pendingstoRemove[i].notificationId == stoi(id) && profile == follower){
-      removeBool = true;
-      break;
+      if(pendingstoRemove[i].profileId == username && pendingstoRemove[i].notificationId == stoi(id) && profile == follower){
+        removeBool = true;
+        break;
+      }
     }
-  }
-
-  for(int i = 0; i < updateSize; i ++){
-    if(pendingsToUpdate[i].profileId == username && pendingsToUpdate[i].notificationId == stoi(id) && profile == follower){
-      dataToWrite.append(username);
-      dataToWrite.append(" ");
-      dataToWrite.append(id);
-      dataToWrite.append(" ");
-      dataToWrite.append(to_string(last_read_by[i]));
-      dataToWrite.append("\n");
-      pending_notifs_f << dataToWrite;
-      update = true;
-      break;
-    }
-  }
-    if(removeBool || update){
+    if(removeBool){
       removeBool = false;
-      update = false;
       continue;
     }
     else
@@ -498,8 +503,8 @@ void MyDatabase::RemovePendingsFile(PendingNotification* pendingstoRemove,Pendin
       line.append("\n");
       temp << line;
     continue;
-    }
   }
+}
   pending_notifs_f.close();
   temp.close();
   remove("pending-notif.txt");

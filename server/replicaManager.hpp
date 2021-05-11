@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include "../common/basiccomm.hpp"
 #include "replicacomms.hpp"
+#include "notificationManager.hpp"
 #define MAX_NUM_REPLICAS 10
 
 class ReplicaComms;
@@ -25,6 +26,7 @@ private:
     int port;
       bool is_primary;
 public:
+  pthread_mutex_t isprimary_mutex;
   int listen_socket;
   int connection_sockets[MAX_NUM_REPLICAS-1];
   int connection_ports[MAX_NUM_REPLICAS-1];
@@ -41,6 +43,7 @@ public:
   void removeSessionFromBackup(string username, string hostname, int port);
   void addFollowtoBackup(string followed,string follower);
   void addNotificationToBackup(string profile,int id, char* timestamp, packet* pkt );
+
 };
 
   void* acceptReplicas(void* args);

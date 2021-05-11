@@ -29,6 +29,7 @@ int Session::attemptLogin(){
     Profile prof(name);
     database.AddProfile(prof);
     database.AddSessionCount(name,this->hostname,this->port); //Apos adicionar o perfil ja incrementa o numero de sessoes ativas
+    database.WriteProfile(name,this->hostname,this->port);
   }
   else{
     Profile* prof = database.getProfile(name);
@@ -68,7 +69,8 @@ void Session::connectionInterrupted(){ //closes socket and removes session from 
   setActive(false);
   Profile* prof = database.getProfile(this->username);
   pthread_mutex_lock(&(prof->logincontrol_mutex));//locks critical session so 2 clients can't login with same user simultaneously
-  database.SubtractSessionCount(this->username,hostname,this->port);
+  database.SubtractSessionCount(this->username,this->hostname,this->port);
+  database.UpdateProfileInFile(this->username,this->hostname,this->port);
   pthread_mutex_unlock(&(prof->logincontrol_mutex));
 }
 

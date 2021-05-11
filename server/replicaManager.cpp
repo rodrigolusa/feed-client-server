@@ -128,9 +128,8 @@ void replicaManager::announceCoordinator(){
 
 void* acceptReplicas(void* args){
   replicaManager* replica = (replicaManager*) args;
-
+    int newsockfd = 0;
   while(true){
-  int newsockfd = 0;
   struct sockaddr_in cli_addr;
   socklen_t clilen;
   clilen = sizeof(struct sockaddr_in);
@@ -138,7 +137,6 @@ void* acceptReplicas(void* args){
     cout << " Couldnt accept replica\n";
     continue;
   }
-
 
   bool foundSpot = false;
 
@@ -149,16 +147,18 @@ void* acceptReplicas(void* args){
       packet* pkt = replica->comms[i]->readMessage();
       while(pkt == NULL)
         pkt = replica->comms[i]->readMessage();
+      cout << pkt->_payload << endl;
       const char* port = new char[pkt->length];
       port = pkt->_payload;
       replica->connection_ports[i] = atoi(port);
       pthread_t new_thread;
       pthread_create(&new_thread, NULL, readMessageFromReplica, replica->comms[i]);
       foundSpot = true;
-      cout << "Replica with port " << atoi(port) << "connected" << endl;
+      cout << "Replica with port " << atoi(port) << " connected" << endl;
       break;
     }
   }
+  newsockfd =0;
 
   if(!foundSpot)
     fprintf(stderr,"Maximum replica capacity reached, can't accept a new one\n");
@@ -171,7 +171,10 @@ void replicaManager::sendmessagetoAllReplicas(uint16_t cmd, char* data, char* ti
   for(int i = 0; i < MAX_NUM_REPLICAS-1;i++){
     if(this->comms[i]->isActive()){
       pthread_mutex_lock(&(this->comms[i]->sendmessage_mutex));
-      this->comms[i]->sendMessage(cmd,data);
+      if(this->comms[i]->sendMessage(cmd,data) == -1){
+        this->connection_ports[i] = -1;
+        this->connection_sockets[i] = -1;
+      }
       pthread_mutex_unlock(&(this->comms[i]->sendmessage_mutex));
 
     }
@@ -185,13 +188,13 @@ void replicaManager::addSessionToBackup(string username, string hostname, int po
     Profile prof(username);
     database.AddProfile(prof);
     database.AddSessionCount(username,hostname,port);
-    cout << "novo usuario " << username << " no host " << hostname << "e porta " << port << endl;
+    cout << "novo usuario " << username << " no host " << hostname << " e porta " << port << endl;
   }
   else{
     Profile* prof = database.getProfile(username);
     database.AddSessionCount(username,hostname,port);
 
-    cout << username << "logado no host " << hostname << "e porta " << port << endl;
+    cout << username << "logado no host " << hostname << " e porta " << port << endl;
   }
 }
 
@@ -199,11 +202,24 @@ void replicaManager::addSessionToBackup(string username, string hostname, int po
 void replicaManager::removeSessionFromBackup(string username, string hostname, int port){
   Profile* prof = database.getProfile(username);
   database.SubtractSessionCount(username,hostname,port);
-  cout << username << "deslogando no host " << hostname << "e porta " << port << endl;
+  cout << username << "deslogando no host " << hostname << " e porta " << port << endl;
 }
 
 void replicaManager::addFollowtoBackup(string followed, string follower){
   database.AddFollowing(follower, followed);
   database.AddFollower(followed, follower);
   cout << "Pedido de follow de " << follower << " para seguir " << followed << endl;
+}
+
+
+void replicaManager::shutdownConnection(ReplicaComms* comms){
+
+  for(int i = 0; i < MAX_NUM_REPLICAS-1; i++){
+    if(this->comms[i] == comms){
+      cout << "Replica with port " << this->connection_ports[i] << "disconnected" << endl;
+      this->connection_ports[i] = -1;
+      this->connection_sockets[i] = -1;
+      break;
+    }
+  }
 }

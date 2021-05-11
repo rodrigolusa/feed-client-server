@@ -32,9 +32,6 @@ public:
     this->sckt = socket;
     this->hostname = hostname;
     setActive(true);
-    this->seqnum = 0;
-    this->seqack = 0;
-    this->numHigherAcks = 0;
     this->port = -1;
   }
 };

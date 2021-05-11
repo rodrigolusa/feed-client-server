@@ -10,7 +10,8 @@ class replicaManager;
 
 
 class ReplicaComms: public BasicComm{
-
+private:
+  bool first_init;
 public:
   pthread_mutex_t sendmessage_mutex;
   replicaManager* replica;

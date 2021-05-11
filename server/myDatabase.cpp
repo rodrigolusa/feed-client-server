@@ -34,6 +34,8 @@ void MyDatabase::UpdateProfileInFile(string profile, string oldhost, int oldport
               dataToWrite.append(" ");
               dataToWrite.append(to_string(newport)); //add new information
               dataToWrite.append(" ");
+              host.clear();
+              port.clear();
               lineStream >> host;
               lineStream >> port;
               dataToWrite.append(host);//append info about other session

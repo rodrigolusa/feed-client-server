@@ -67,6 +67,8 @@ void Session::flushsendingQueue(){
 void Session::connectionInterrupted(){ //closes socket and removes session from vector
   close(this->sckt);
   setActive(false);
+  if(this->active == false)//if it's false, then we've already done this with other thread
+    return;
   Profile* prof = database.getProfile(this->username);
   pthread_mutex_lock(&(prof->logincontrol_mutex));//locks critical session so 2 clients can't login with same user simultaneously
   database.SubtractSessionCount(this->username,this->hostname,this->port);

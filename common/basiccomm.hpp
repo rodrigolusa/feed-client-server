@@ -36,15 +36,16 @@ protected:
 	bool active;
   int sckt;
   uint16_t seqnum;
-	uint16_t seqack;
-	uint16_t numHigherAcks;
 public:
   int sendMessage(uint16_t cmd,  char* data = NULL, char* timestamp = NULL);
   packet* readMessage();
 	void setActive(bool value);
 	bool isActive();
 	int getSocket();
+	void setSocket(int sckt);
+	void resetSeqNums();
 	virtual void connectionInterrupted() = 0;
+	BasicComm();
 };
 
 char* getTimestamp(char* timestamp);

@@ -16,8 +16,8 @@ int main(int argc, char *argv[]){
       primaryManager primary;
       primary.init(&replica);
       while(replica.isPrimary()){
-        //primary.sendKeepAlive();
-        //replica.receiveMessages();
+        primary.sendKeepAlive(&replica);
+        usleep(10000);
       }
       //primary.finalize();
     }

@@ -14,6 +14,8 @@
 #include "replicacomms.hpp"
 #include "notificationManager.hpp"
 #define MAX_NUM_REPLICAS 10
+#define TIMEOUT 30000
+
 
 class ReplicaComms;
 
@@ -43,7 +45,7 @@ public:
   void removeSessionFromBackup(string username, string hostname, int port);
   void addFollowtoBackup(string followed,string follower);
   void addNotificationToBackup(string profile,int id, char* timestamp, packet* pkt );
-
+  void shutdownConnection(ReplicaComms* comms);
 };
 
   void* acceptReplicas(void* args);

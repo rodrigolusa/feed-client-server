@@ -46,9 +46,7 @@ int ClientComms::login(){
   sendMessage(LOGIN,this->username);
   packet* pkt = readMessage();
   if(pkt->type == SUCCESS){
-    char* dummieport = "4002";
-    //sendMessage(BACKUP_PORT,(char*)to_string(this->backup_port).c_str());
-    sendMessage(BACKUP_PORT,(char*)dummieport);
+    sendMessage(BACKUP_PORT,(char*)to_string(this->backup_port).c_str());
     pkt = readMessage();
     if(pkt->type == SUCCESS)
       return 0;
@@ -85,13 +83,13 @@ void ClientComms::connectionInterrupted(){ //closes connection between client an
     return;
     }
   else{
-    //pthread_mutex_lock(&(this->reconnecting_mutex));
-    //while(this->not_reconnected){//waiting for reconnect
-    //  pthread_cond_wait(&(this->reconnecting_cond),&(this->reconnecting_mutex));
-    return ;
-    };
+    pthread_mutex_lock(&(this->reconnecting_mutex));
+    while(this->not_reconnected)//waiting for reconnect
+      pthread_cond_wait(&(this->has_reconnected),&(this->reconnecting_mutex));
+    pthread_mutex_unlock(&(this->reconnecting_mutex));
     return;
   }
+}
 
 
 void ClientComms::closeSocket(){
@@ -106,9 +104,61 @@ void ClientComms::init(char* username, char* hostname, int port){
   this->seqnum = 0;
   this->seqack = 0;
   this->numHigherAcks = 0;
+  this->not_reconnected = true;
+  this->not_initialized_listen = true;
+  pthread_mutex_init(&reconnecting_mutex,NULL);
+  pthread_cond_init(&has_reconnected, NULL);
+  pthread_t new_thread;
+  pthread_create(&new_thread, NULL, waitForBackupConn, this);
+
+  pthread_mutex_lock(&(this->reconnecting_mutex));//locking thread to guarantee we have backup port once we login
+  while(this->not_initialized_listen)//waiting
+    pthread_cond_wait(&(this->has_reconnected),&(this->reconnecting_mutex));
+  pthread_mutex_unlock(&(this->reconnecting_mutex));
+}
 
 
 
-//  pthread_mutex_init(&(this->reconnecting_mutex),NULL);
-  //pthread_cond_init(&(this->reconnecting_cond), NULL);
+void* waitForBackupConn(void* args){
+
+
+  ClientComms* comms = (ClientComms*) args;
+
+  pthread_mutex_lock(&(comms->reconnecting_mutex));
+
+  comms->backup_port = DEFAULT_BACKUP_PORT;
+
+  int socket = 0;
+  socket = initListeningSocket(comms->backup_port);
+  while(socket == -1){
+    comms->backup_port += 1;
+    socket = initListeningSocket(comms->backup_port);//if port is unavailable, try next port..
+  }
+  comms->not_initialized_listen = false;
+  pthread_mutex_unlock(&(comms->reconnecting_mutex));
+  pthread_cond_broadcast(&(comms->has_reconnected));//allowing comms to continue after backup port is set.
+
+
+  comms->backup_socket = socket;
+  int newsockfd = 0;
+  struct sockaddr_in cli_addr;
+  socklen_t clilen;
+  clilen = sizeof(struct sockaddr_in);
+  if ((newsockfd = accept(comms->backup_socket, (struct sockaddr *) &cli_addr, &clilen)) == -1){
+    cout << " Couldnt accept backup\n";
+    exit(-1);
+  }
+  pthread_mutex_lock(&(comms->reconnecting_mutex));
+
+  comms->closeSocket();
+  comms->setSocket(newsockfd);
+  comms->login();
+
+  comms->not_reconnected = false;
+  pthread_mutex_unlock(&(comms->reconnecting_mutex));
+  pthread_cond_broadcast(&(comms->has_reconnected));//allowing comms to continue after reconnected
+
+
+
+
 }

@@ -17,6 +17,11 @@ timestamp[6],timestamp[7],timestamp[8],timestamp[9],timestamp[10],timestamp[11])
 }
 
 
+
+BasicComm::BasicComm(){
+  this->seqnum = 0;
+}
+
 char* BasicComm::serializeData(packet* pkt){
 
   char* serializedData = new char[maxPacketSize];
@@ -101,6 +106,10 @@ int BasicComm::sendMessage(uint16_t cmd, char* data, char* timestamp){
   return 0;
 }
 
+void BasicComm::setSocket(int sckt){
+  this->sckt = sckt;
+}
+
 packet* BasicComm::readMessage(){
   int n;
 
@@ -122,25 +131,9 @@ packet* BasicComm::readMessage(){
   }
   packet* pkt = deserializeData(serialized);
 
-
-  if (pkt->seqn == this->seqack + 1){//if packet is next in order, we can just inc SEQ ACK and return packet
-    this->seqack++;
-    this->seqack += this->numHigherAcks; //accounting for new packets(higher seq num) that were received before this one.
-    this->numHigherAcks = 0; //we can also reset counter of acks above current one, once they are already accounted for
-
-    return pkt;
-  }
-
-  else if(pkt->seqn < this->seqack + 1){ //if sequence number of source is smaller than acknowledged by dest,
-                                  //it's definitely a replicate, we can just discard it.
-    return NULL;
-  }
-
-  else{
-    this->numHigherAcks++;
-    return pkt;
-  }
+  return pkt;
 }
+
 
 bool BasicComm::isActive(){
   return this->active;

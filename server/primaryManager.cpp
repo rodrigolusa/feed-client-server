@@ -61,3 +61,7 @@ void* acceptClients(void* args){
 void primaryManager::closeSocket(){
 			close(this->sckt);
 }
+
+void primaryManager::sendKeepAlive(replicaManager* replica){
+	replica->sendmessagetoAllReplicas(KEEP_ALIVE);
+}

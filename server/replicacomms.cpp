@@ -1,18 +1,23 @@
 #include "replicacomms.hpp"
 
 void ReplicaComms::connectionInterrupted(){
-
+  this->setActive(false);
+  close(this->sckt);
+  replica->shutdownConnection(this);
 }
 
 ReplicaComms::ReplicaComms(){
-  this->active = false;
+  this->setActive(false);
+  this->first_init = true;
 }
-void ReplicaComms::init(int socket,replicaManager* replica){
+void ReplicaComms::init(int sckt,replicaManager* replica){
   this->replica = replica;
-  this->sckt = socket;
-  cout << this->sckt << endl;
-  this->active = true;
+  this->setActive(true);
+  this->setSocket(sckt);
+  if(this->first_init){//control so we dont init mutex twice.
   pthread_mutex_init(&sendmessage_mutex,NULL);
+  this->first_init = false;
+  }
 }
 
 
@@ -20,26 +25,38 @@ void ReplicaComms::init(int socket,replicaManager* replica){
 void* readMessageFromReplica(void* args){
 
   ReplicaComms* comms = (ReplicaComms*) args;
-  comms->setActive(true);
   replicaManager* replica = comms->replica;
-    cout << comms->getSocket() << endl;
   string username,line,id, loginname, hostname, port, followed,follower;
   char* timestamp;
   stringstream lineStream;
   const char* header;
-  while(true){
+  struct timeval tv;
+  tv.tv_sec = TIMEOUT / 1000000;
+  tv.tv_usec = TIMEOUT;
+  setsockopt(comms->getSocket(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+  while(comms->isActive()){
 
     packet* pkt = comms->readMessage();
 
-    //if(timeout...) check for timeout if leader.
-    if(pkt == NULL)
-      continue;
-    if(comms->getSocket() == replica->leader_socket){ //if this is the leader, then reply accordingly
+    if(replica->isPrimary())
+    {
+
+
+
+
+
+    }
+    else{
+
+    if(pkt == NULL)//then timeout
+      //replica->startElection();
+      cout << "Devo iniciar a eleicao " << endl;
+
+    else if(comms->getSocket() == replica->leader_socket){ //if this is the leader, then reply accordingly
 
         switch(pkt->type){
 
-        case KEEP_ALIVE:
-          cout << "primary diz: estou vivo" << endl;
+        case KEEP_ALIVE://if keep alive, just ignore.
         break;
         case SEND_HEADER:
           header = new char[pkt->length];
@@ -115,6 +132,8 @@ void* readMessageFromReplica(void* args){
     else{
 
 
+        }
       }
     }
+    pthread_exit(NULL);
   }

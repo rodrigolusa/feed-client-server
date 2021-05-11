@@ -20,7 +20,7 @@
 #include "replicaManager.hpp"
 
 #define DEFAULT_PORT 4000
-
+#define KEEPALIVE_TIMEOUT 10000
 
 using namespace std;
 
@@ -40,7 +40,7 @@ public:
 	int init(replicaManager* replica);
 	int sckt;
 	void closeSocket();
-	void sendKeepAlive();
+	void sendKeepAlive(replicaManager* replica);
 };
 
 

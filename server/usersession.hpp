@@ -23,6 +23,8 @@ public:
   int attemptLogin();
   void connectionInterrupted();
   string getUsername();
+  void setUsername(string name);
+  void setHostname(string host);
   void flushsendingQueue();
   void setPort(int port);
   int getPort();

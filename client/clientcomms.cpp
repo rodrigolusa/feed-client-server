@@ -102,8 +102,6 @@ void ClientComms::init(char* username, char* hostname, int port){
   this->hostname = hostname;
   this->port = port;
   this->seqnum = 0;
-  this->seqack = 0;
-  this->numHigherAcks = 0;
   this->not_reconnected = true;
   this->not_initialized_listen = true;
   pthread_mutex_init(&reconnecting_mutex,NULL);
@@ -145,14 +143,15 @@ void* waitForBackupConn(void* args){
   socklen_t clilen;
   clilen = sizeof(struct sockaddr_in);
   if ((newsockfd = accept(comms->backup_socket, (struct sockaddr *) &cli_addr, &clilen)) == -1){
-    cout << " Couldnt accept backup\n";
+    cout << " Couldnt accept backup" << endl;
     exit(-1);
   }
   pthread_mutex_lock(&(comms->reconnecting_mutex));
 
+
   comms->closeSocket();
   comms->setSocket(newsockfd);
-  comms->login();
+  comms->setActive(true);
 
   comms->not_reconnected = false;
   pthread_mutex_unlock(&(comms->reconnecting_mutex));

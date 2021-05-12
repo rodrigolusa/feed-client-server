@@ -26,6 +26,7 @@ void* readMessageFromReplica(void* args){
 
   ReplicaComms* comms = (ReplicaComms*) args;
   replicaManager* replica = comms->replica;
+  while(replica->connecting_to_replicas);//wait for other replicas to connect
   string username,line,id, loginname, hostname, port, followed,follower;
   char* timestamp;
   stringstream lineStream;
@@ -36,24 +37,36 @@ void* readMessageFromReplica(void* args){
   setsockopt(comms->getSocket(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
   while(comms->isActive()){
 
-    packet* pkt = comms->readMessage();
-
-    if(replica->isPrimary())
-    {
+      packet* pkt = comms->readMessage();
 
 
 
 
+    if(replica->ongoing_election){
+        replica->electionActions(pkt,comms);
+      }
 
-    }
+    if(replica->isPrimary()){
+      if(pkt == NULL) //if pkt is empty, just ignore.
+        continue;
+
+        else if(pkt->type == ELECTION){
+          replica->ongoing_election = true;
+          replica->electionActions(pkt,comms);
+          }
+
+
+        }
     else{
 
-    if(pkt == NULL)//then timeout
-      //replica->startElection();
-      cout << "Devo iniciar a eleicao " << endl;
+     if(comms->getSocket() == replica->leader_socket){ //if this is the leader, then reply accordingly
 
-    else if(comms->getSocket() == replica->leader_socket){ //if this is the leader, then reply accordingly
+       if(pkt == NULL){
+         replica->ongoing_election = true;
+         replica->sendElectiontoHigherIDs();
+       }
 
+       else{
         switch(pkt->type){
 
         case KEEP_ALIVE://if keep alive, just ignore.
@@ -121,19 +134,30 @@ void* readMessageFromReplica(void* args){
           line.clear();
           replica->addFollowtoBackup(followed,follower);
 
-
+          case ELECTION:
+          replica->ongoing_election = true;
+          replica->electionActions(pkt,comms);
+          break;
 
 
         }
-
         delete pkt;
-    }
-
-    else{
-
-
-        }
       }
     }
-    pthread_exit(NULL);
+
+    else {
+          if(pkt == NULL)
+            continue;
+          else if(pkt->type == ELECTION){
+            replica->ongoing_election = true;
+            replica->electionActions(pkt,comms);
+            }
+          }
+
   }
+}
+
+  replica->checkIfOnlyBackup();//have to check if this was the last comm.
+  //replica->checkIfBackups();
+  pthread_exit(NULL);
+}

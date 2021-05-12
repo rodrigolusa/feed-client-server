@@ -5,13 +5,26 @@ using namespace std;
 
 
 int primaryManager::init(replicaManager* replica){
-this->sckt = initListeningSocket(DEFAULT_PORT);
-this->port = DEFAULT_PORT;
+
+int sckt = 0;
+int port = DEFAULT_PORT;
+
+sckt = initListeningSocket(port);
+while(sckt == -1){
+	port++;
+	cout << "Trying to connect on port " << port << endl;
+	sckt = initListeningSocket(port);
+	}
+cout<< "Sucessful connection on port " << port << endl;
+this->sckt = sckt;
+this->port = port;
+replica->primary_socket = this->sckt;
 pthread_t new_thread;
 Managers* managers = new Managers;
 managers->primary = this;
 managers->replica = replica;
 pthread_create(&new_thread, NULL, acceptClients, managers);
+connecttoOlderClients(replica);
 return 0;
 }
 
@@ -64,4 +77,35 @@ void primaryManager::closeSocket(){
 
 void primaryManager::sendKeepAlive(replicaManager* replica){
 	replica->sendmessagetoAllReplicas(KEEP_ALIVE);
+}
+
+void primaryManager::connecttoOlderClients(replicaManager* replica){
+
+list<Profile>::iterator it;
+int newsockfd;
+Session_Replica* info;
+Session* new_session;
+
+for(it = database.data.begin(); it != database.data.end(); it++){
+
+	for(int i = 0; i < 2; i++){
+		if(it->backup_ports[i] != -1){//if port is different than -1, then we have an active session.
+				newsockfd = createSocket();
+				if(connectToSv(it->backup_hosts[i],it->backup_ports[i],newsockfd)){
+				info = new Session_Replica();
+			 	new_session = new Session(newsockfd,it->backup_hosts[i]);
+				new_session->setPort(it->backup_ports[i]);
+				new_session->setUsername(it->id);
+				cout << it->id << endl;
+				info->replica = replica;
+				info->session = new_session;
+				pthread_t new_thread;
+				pthread_create(&new_thread, NULL, NotificationProducer, info);
+					pthread_detach(new_thread);
+				}
+
+			}
+		}
+
+	}
 }

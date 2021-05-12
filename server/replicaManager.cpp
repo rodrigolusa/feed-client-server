@@ -5,8 +5,12 @@ bool replicaManager::isPrimary(){
 
 int replicaManager::init(int port){
   database.initDatabase();
+  this->connecting_to_replicas = true;
   pthread_mutex_init(&isprimary_mutex,NULL);
+  pthread_cond_init(&changing_role, NULL);
   this->is_primary = false;
+  this->candidate = true;
+  this->ongoing_election = false;
   for(int i = 0; i < MAX_NUM_REPLICAS-1; i++){
     this->connection_sockets[i] = -1;
     this->connection_ports[i] = -1;
@@ -49,7 +53,7 @@ int replicaManager::init(int port){
 
   this->serverconfd.close();
   delete info;
-
+  this->leader_socket = 0;
   int maxport = this->port;
   for(int i = 0; i < MAX_NUM_REPLICAS-1;i++){
     if(maxport < connection_ports[i]){
@@ -59,9 +63,10 @@ int replicaManager::init(int port){
   }
     this->leader_port = maxport;
 
+    this->connecting_to_replicas = false;
     if(this->port == maxport){ //if this replica has the highest ID, announce new leader and become primary.
+      this->ongoing_election = true;
       announceCoordinator();
-      this->is_primary = true;
     }
   return 0;
 
@@ -121,6 +126,15 @@ void replicaManager::addNotificationToBackup(string profile,int id, char* timest
 
 
 void replicaManager::announceCoordinator(){
+  sendmessagetoAllReplicas(COORDINATOR);
+  this->ongoing_election = false;
+  pthread_mutex_lock(&(this->isprimary_mutex));
+  this->is_primary = true;
+  pthread_mutex_unlock(&(this->isprimary_mutex));
+  pthread_cond_broadcast(&(this->changing_role));
+  cout << "I'm the new primary" << endl;
+  this->leader_port = -1;
+  this->leader_socket = -1;
 
   return;
 }
@@ -128,7 +142,7 @@ void replicaManager::announceCoordinator(){
 
 void* acceptReplicas(void* args){
   replicaManager* replica = (replicaManager*) args;
-    int newsockfd = 0;
+  int newsockfd = 0;
   while(true){
   struct sockaddr_in cli_addr;
   socklen_t clilen;
@@ -222,4 +236,94 @@ void replicaManager::shutdownConnection(ReplicaComms* comms){
       break;
     }
   }
+}
+
+void replicaManager::terminatePrimaryOperations(){
+  close(this->primary_socket);
+  pthread_mutex_lock(&(this->isprimary_mutex));
+  this->is_primary = false;
+  pthread_mutex_unlock(&(this->isprimary_mutex));
+
+}
+
+void replicaManager::sendLogoutToReplicas(Session* user){
+    string backup(user->getUsername());
+    backup.append(" ");
+    backup.append(user->getHostname());
+    backup.append(" ");
+    backup.append(to_string(user->getPort()));
+    this->sendmessagetoAllReplicas(LOGOUT,(char*)backup.c_str());
+    database.UpdateProfileInFile(user->getUsername(),user->getHostname(),user->getPort());
+
+}
+
+void replicaManager::setPrimary(bool value){
+  this->is_primary = value;
+}
+
+void replicaManager::setLeader(int socket){
+  for(int i = 0; i < MAX_NUM_REPLICAS -1; i++)
+    if(connection_sockets[i] == socket){
+      this->leader_port = connection_ports[i];
+      break;
+    }
+  this->leader_socket = socket;
+}
+
+void replicaManager::electionActions(packet* pkt, ReplicaComms* comms){
+
+  if(pkt == NULL){
+      if(this->candidate)//timeout was reached and no one replied, then i have the biggest ID
+        announceCoordinator();
+      return;
+  }
+  else{
+  switch(pkt->type){
+    case ANSWER:
+      this->candidate = false;
+      break;
+    case ELECTION:
+      if(this->candidate == false)
+        break;
+      else{
+        sendElectiontoHigherIDs();
+        comms->sendMessage(ANSWER);
+      }
+      break;
+      case COORDINATOR:
+      if(this->is_primary)
+        terminatePrimaryOperations();
+      setLeader(comms->getSocket());
+      this->ongoing_election = false;
+      this->candidate = true;
+      break;
+
+      }
+    }
+
+  }
+
+
+void replicaManager::sendElectiontoHigherIDs(){
+
+  for(int i =0 ; i < MAX_NUM_REPLICAS-1;i++){
+    if(this->comms[i]->isActive() && this->connection_ports[i] > this->port){
+      pthread_mutex_lock(&(this->comms[i]->sendmessage_mutex));
+      if(this->comms[i]->sendMessage(ELECTION) == -1){
+        this->connection_ports[i] = -1;
+        this->connection_sockets[i] = -1;
+      }
+      pthread_mutex_unlock(&(this->comms[i]->sendmessage_mutex));
+    }
+  }
+}
+
+void replicaManager::checkIfOnlyBackup(){
+  bool last_one = true;
+  for(int i =0; i< MAX_NUM_REPLICAS-1; i++){
+    if(this->connection_sockets[i] != -1)
+      last_one = false;
+    }
+    if(last_one)
+      announceCoordinator();//if this replica is the last one remaining, become coordinator and primary.
 }

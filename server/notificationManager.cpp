@@ -109,7 +109,7 @@ void* NotificationConsumer(void* arg){
     Session* user = info->session;
     replicaManager* replica = info->replica;
     Profile* prof = database.getProfile(user->getUsername());
-    while(user->isActive()){
+    while(user->isActive() && replica->isPrimary()){
       pthread_mutex_lock(&(prof->pendingnotification_mutex));//blocking behavior for consuming notification while list is empty
       while(islistEmptyForClient(prof->pendingNotifications,user->getPort())){
         pthread_cond_wait(&(prof->not_empty),&(prof->pendingnotification_mutex));
@@ -131,10 +131,10 @@ void* NotificationConsumer(void* arg){
         user->sendingQueue.push_back(msg);
         }
       }
-      if(user->isActive())
+      if(user->isActive() && replica->isPrimary())
         ClearNotifications(user->getUsername(),user->getPort(),replica);
       pthread_mutex_unlock(&(prof->pendingnotification_mutex));
-      if(user->isActive())
+      if(user->isActive() && replica->isPrimary())
         user->flushsendingQueue();
     }
     pthread_exit(NULL);
@@ -176,7 +176,7 @@ void* NotificationProducer(void* arg){
   //make socket non-blocking
   fcntl(user->getSocket(), F_SETFL, fcntl(user->getSocket(), F_GETFL, 0) | O_NONBLOCK);
 
-	while(user->isActive()){
+	while(user->isActive() && replica->isPrimary()){
 
 		packet* pkt = user->readMessage();
 
@@ -220,8 +220,6 @@ void* NotificationProducer(void* arg){
         pending_list.clear();
         cout << "mensagem recebida foi " << pkt->_payload << getDate(pkt->timestamp) << endl;
 
-				//user->sendMessage(SEND_NAME,(char*)name.c_str());
-				//user->sendMessage(SEND_DATA,(char*)pkt->_payload);
 				break;
 			default:
         user->sendMessage(ERROR);
@@ -233,12 +231,8 @@ void* NotificationProducer(void* arg){
     }
 	}
 
-  string backup(user->getUsername());
-  backup.append(" ");
-  backup.append(user->getHostname());
-  backup.append(" ");
-  backup.append(to_string(user->getPort()));
-  replica->sendmessagetoAllReplicas(LOGOUT,(char*)backup.c_str());
-  database.UpdateProfileInFile(user->getUsername(),user->getHostname(),user->getPort());
+  if(replica->isPrimary())
+    replica->sendLogoutToReplicas(user);
+
 	pthread_exit(NULL);
 }

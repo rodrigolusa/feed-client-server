@@ -15,6 +15,7 @@
 #include "replicaManager.hpp"
 #include <fcntl.h>
 #include <set>
+class replicaManager;
 typedef struct{
   string follower;
   PendingNotification pn;

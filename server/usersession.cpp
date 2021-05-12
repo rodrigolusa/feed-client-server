@@ -92,3 +92,10 @@ void Session::setPort(int port){
   string Session::getHostname(){
     return this->hostname;
   }
+
+  void Session::setUsername(string name){
+    this->username = name;
+  }
+  void Session::setHostname(string host){
+    this->hostname = host;
+  }

@@ -41,6 +41,7 @@ public:
 	int sckt;
 	void closeSocket();
 	void sendKeepAlive(replicaManager* replica);
+	void connecttoOlderClients(replicaManager* replica);
 };
 
 

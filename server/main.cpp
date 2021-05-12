@@ -17,9 +17,9 @@ int main(int argc, char *argv[]){
       primary.init(&replica);
       while(replica.isPrimary()){
         primary.sendKeepAlive(&replica);
-        usleep(10000);
+        usleep(KEEPALIVE_TIMEOUT);
       }
-      //primary.finalize();
+      primary.closeSocket();
     }
     else{
         fprintf(stderr,"Sou uma replica\n");

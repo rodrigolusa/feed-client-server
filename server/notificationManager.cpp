@@ -9,30 +9,61 @@ void print(list<ReceivedNotification> const &list)
 }
 
 
-void findNotificationsToRemove(string profile, int port){
+void findNotificationsToRemove(string profile, int port,replicaManager* replica){
 
   Profile* prof = database.getProfile(profile);
   list<PendingNotification>::iterator it;
   list<PendingNotification> pending_list;
   int removeSize = 0;
   int rmidx = 0;
+  int updateSize = 0;
+  int upidx = 0;
+  PendingNotification* remove_vec;
+  PendingNotification* update_vec;
 
   pending_list = prof->pendingNotifications;
-  removeSize = pending_list.size();
-  PendingNotification remove_vec[removeSize];
+  int sessions = database.GetActiveSessionsNumber(prof->id);
 
-  for(it = pending_list.begin();it != pending_list.end();it++){
-        prof = database.getProfile(it->profileId);
-        pthread_mutex_lock(&(prof->receivenotification_mutex));
-        ReceivedNotification* notif = database.GetReceivedNotification(it->profileId,it->notificationId);
-        pthread_mutex_unlock(&(prof->receivenotification_mutex));
-        if(notif->pendingFollowersToReceive == 0)
-          database.RemoveReceivedFromFile(notif->id);
-        remove_vec[rmidx] = *it;
-        rmidx++;
-      }
+  if(sessions == 1){//if we have only one session, solution is trivial, we can just delete all pending notifs for user
+    removeSize = prof->pendingNotifications.size();
+    remove_vec = new PendingNotification[removeSize];
 
-    database.RemovePendingsFile(remove_vec,removeSize,profile);
+    for(it = pending_list.begin();it != pending_list.end();it++){
+          prof = database.getProfile(it->profileId);
+          string data = "";
+          data.clear();
+          data = profile + " " + it->profileId + " " + to_string(it->notificationId);
+          replica->sendmessagetoAllReplicas(REMOVE_PENDING,(char*)data.c_str());
+          pthread_mutex_lock(&(prof->receivenotification_mutex));
+          ReceivedNotification* notif = database.GetReceivedNotification(it->profileId,it->notificationId);
+          pthread_mutex_unlock(&(prof->receivenotification_mutex));
+          if(notif->pendingFollowersToReceive == 0){
+            data.clear();
+            data += it->profileId;
+            data += " ";
+            data += to_string(notif->id);
+            replica->sendmessagetoAllReplicas(REMOVE_RECEIVED,(char*)data.c_str());
+            database.RemoveReceivedFromFile(notif->id);
+          }
+          remove_vec[rmidx] = *it;
+          rmidx++;
+        }
+
+      database.RemovePendingsFile(remove_vec,removeSize,profile);
+      delete[] remove_vec;
+    }
+    else{
+      for(it = pending_list.begin();it != pending_list.end();it++){
+
+
+
+          }
+
+
+    }
+
+
+
   }
 
 
@@ -62,7 +93,7 @@ void ClearNotifications(string profile, int port,replicaManager* replica){
 
       pthread_mutex_lock(&(replica->isprimary_mutex));
       if(replica->isPrimary()){//if it's primary, we have to delete notifs from file.
-        findNotificationsToRemove( profile, port);
+        findNotificationsToRemove( profile, port,replica);
       }
         pthread_mutex_unlock(&(replica->isprimary_mutex));
 

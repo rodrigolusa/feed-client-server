@@ -27,4 +27,4 @@ void* NotificationConsumer(void* arg);
 void* NotificationProducer(void* arg);
 bool islistEmptyForClient(list<PendingNotification> notf_list, int socket);
 void commitChanges(ReceivedNotification rn, list<PendingDelayed>, string username, replicaManager* replica);
-void findNotificationsToRemove(string profile,int port);
+void findNotificationsToRemove(string profile,int port,replicaManager* replica);

@@ -27,7 +27,7 @@ void* readMessageFromReplica(void* args){
   ReplicaComms* comms = (ReplicaComms*) args;
   replicaManager* replica = comms->replica;
   while(replica->connecting_to_replicas);//wait for other replicas to connect
-  string username,line,id, loginname, hostname, port, followed,follower;
+  string username,line,id, loginname, hostname, port, followed,follower,profile, count, last_read_by, not_id;
   char* timestamp;
   stringstream lineStream;
   const char* header;
@@ -130,11 +130,73 @@ void* readMessageFromReplica(void* args){
           lineStream.clear();
           line.clear();
           replica->addFollowtoBackup(followed,follower);
+          break;
 
           case ELECTION:
           replica->ongoing_election = true;
           replica->electionActions(pkt,comms);
           break;
+
+          case REMOVE_RECEIVED:
+          header = new char[pkt->length];
+          header = pkt->_payload;
+          line = string(header);
+          delete[] header;
+          lineStream << line;
+          lineStream >> profile;
+          lineStream >> not_id;
+          lineStream.str("");
+          lineStream.clear();
+          line.clear();
+          replica->removeReceivedNotification(profile,stoi(not_id));
+          break;
+
+          case UPDATE_RECEIVED:
+          header = new char[pkt->length];
+          header = pkt->_payload;
+          line = string(header);
+          delete[] header;
+          lineStream << line;
+          lineStream >> profile;
+          lineStream >> not_id;
+          lineStream >> count;
+          lineStream.str("");
+          lineStream.clear();
+          line.clear();
+          replica->updateReceivedNotification(profile,stoi(not_id),stoi(count));
+          break;
+
+          case REMOVE_PENDING:
+          header = new char[pkt->length];
+          header = pkt->_payload;
+          line = string(header);
+          delete[] header;
+          lineStream << line;
+          lineStream >> follower;
+          lineStream >> profile;
+          lineStream >> not_id;
+          lineStream.str("");
+          lineStream.clear();
+          line.clear();
+          replica->removePendingNotification(follower,profile,stoi(not_id));
+          break;
+
+          case UPDATE_PENDING:
+          header = new char[pkt->length];
+          header = pkt->_payload;
+          line = string(header);
+          delete[] header;
+          lineStream << line;
+          lineStream >> follower;
+          lineStream >> profile;
+          lineStream >> not_id;
+          lineStream >> last_read_by;
+          lineStream.str("");
+          lineStream.clear();
+          line.clear();
+          replica->updatePendingNotification(follower,profile,stoi(not_id),stoi(last_read_by));
+          break;
+
 
 
         }

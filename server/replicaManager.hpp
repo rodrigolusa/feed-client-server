@@ -60,6 +60,11 @@ public:
   void electionActions(packet* pkt,ReplicaComms* comms);
   void sendElectiontoHigherIDs();
   void checkIfOnlyBackup();
+  void removeReceivedNotification(string profile, int notification);
+  void removePendingNotification(string follower, string profile, int notification);
+  void updatePendingNotification(string follower, string profile, int notification, int port);
+  void updateReceivedNotification(string profile, int notification, int count);
+
 };
 
   void* acceptReplicas(void* args);

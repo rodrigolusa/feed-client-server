@@ -109,15 +109,6 @@ void replicaManager::addNotificationToBackup(string profile,int id, char* timest
     database.AddPendingNotifications(profile,pn);
     database.PrintDatabase();
     followers = database.GetFollowers(profile);
-
-    for(it = followers.begin(); it != followers.end();it++)
-    {
-      for(int i = 0; i < 2; i++){
-        prof = database.getProfile(*it);
-          if(prof->backup_ports[i] != -1)//if session is active
-            ClearNotifications(*it,prof->backup_ports[i],this);
-    }
-  }
     database.PrintDatabase();
 }
 
@@ -224,6 +215,29 @@ void replicaManager::addFollowtoBackup(string followed, string follower){
   database.AddFollower(followed, follower);
   cout << "Pedido de follow de " << follower << " para seguir " << followed << endl;
 }
+
+void replicaManager::removeReceivedNotification(string profile, int notification){
+  database.RemoveReceivedNotifications(profile,notification);
+  cout << "removing received notification of " << profile << " with notification ID " << notification << endl;
+
+}
+
+void replicaManager::removePendingNotification(string follower, string profile, int notification){
+  database.RemovePendingNotifications(follower,profile,notification);
+  cout << "removing pending notification of " << follower << " with notification ID " << notification << endl;
+}
+
+void replicaManager::updateReceivedNotification(string profile, int notification, int count){
+  ReceivedNotification* notif = database.GetReceivedNotification(profile,notification);
+  notif->pendingFollowersToReceive = count;
+  cout << "Updated to " << count << " followers to receive notif of " << profile << " with notification ID " << notification << endl;
+}
+
+
+void replicaManager::updatePendingNotification(string follower, string profile, int notification, int port){
+
+}
+
 
 
 void replicaManager::shutdownConnection(ReplicaComms* comms){

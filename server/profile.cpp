@@ -127,13 +127,10 @@ void Profile::RemoveReceivedNotification(int r){
 }
 
 void Profile::RemovePendingNotification(string p, int i){
-    list<PendingNotification>::iterator it;
-    it = pendingNotifications.end();
-    for(it = pendingNotifications.begin(); it!= pendingNotifications.end(); it++){
 
-        if(it->profileId == p && it->notificationId == i){
-            pendingNotifications.erase(it);
-            break;
-        }
-    }
+  list<PendingNotification>::iterator it;
+
+    this->pendingNotifications.erase(std::remove_if(this->pendingNotifications.begin(), this->pendingNotifications.end(), [&p,i](PendingNotification notif){ return (notif.profileId == p && notif.notificationId == i); }), this->pendingNotifications.end());
+
+
 }

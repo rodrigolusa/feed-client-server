@@ -54,10 +54,17 @@ void findNotificationsToRemove(string profile, int port,replicaManager* replica)
     }
     else{
       for(it = pending_list.begin();it != pending_list.end();it++){
-
-
-
+        if(it->last_read_by == -2)
+          updateSize++;
+        else
+          if(it->last_read_by != port)
+            removeSize++;
           }
+
+        remove_vec = new PendingNotification[removeSize];
+        update_vec = new PendingNotification[updateSize];
+
+
 
 
     }
@@ -241,10 +248,10 @@ void* NotificationProducer(void* arg){
 				pn.profileId = name;
 				pn.notificationId = notificationId;
         pending_list.splice(pending_list.end(),getPendingForFollowers(name,pn)); //adds new pending notifications that we need to insert
-
+        commitChanges(rn,pending_list,name,replica);
         database.AddReceivedNotifications(user->getUsername(),rn);
         database.AddPendingNotifications(user->getUsername(),pn);
-        commitChanges(rn,pending_list,name,replica);
+
         pending_list.clear();
         cout << "mensagem recebida foi " << pkt->_payload << getDate(pkt->timestamp) << endl;
 

@@ -48,7 +48,7 @@ public:
     void initFollowers();
     void WriteFollower(string follower, string followed);
     void initDatabase();
-    void RemovePendingsFile(PendingNotification* pendingstoRemove, int removeSize, string profile);
+    void RemovePendingsFile(PendingNotification* pendingstoRemove, int removeSize, string profile, PendingNotification* pendingstoUpdate = NULL,int updateSize = 0 ,int port = 0);
     void WriteReceivedFile(string username,ReceivedNotification rn);
     void WritePendingFile(string follower,PendingNotification pn);
     void RemoveReceivedFromFile(int idToRemove);
@@ -56,6 +56,8 @@ public:
     void initReceivedNotif();
     void UpdateProfileInFile(string profile, string oldhost, int oldport, string newhost = "-1",int newport = -1);
     int GetActiveFollowersNumber(string profile);
+    void UpdateReceivedNotificationInFile(int notificationId, int count);
+    PendingNotification* GetPendingNotification(string follower,string profile, int id);
 };
 extern MyDatabase database;
 extern int notificationId;

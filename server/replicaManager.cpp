@@ -102,13 +102,11 @@ void replicaManager::addNotificationToBackup(string profile,int id, char* timest
     rn.timestamp = timestamp;
     rn.message = pkt->_payload;
     rn.size = pkt->length;
-    rn.pendingFollowersToReceive = database.GetFollowersNumber(profile) - database.GetActiveFollowersNumber(profile);
+    rn.pendingFollowersToReceive = database.GetFollowersNumber(profile);
     prof->AddReceivedNotification(rn); // dont need to wait for mutex, already guaranteed we will get it(serialized).
     pn.profileId = profile;
     pn.notificationId = id;
     database.AddPendingNotifications(profile,pn);
-    database.PrintDatabase();
-    followers = database.GetFollowers(profile);
     database.PrintDatabase();
 }
 
@@ -219,6 +217,7 @@ void replicaManager::addFollowtoBackup(string followed, string follower){
 void replicaManager::removeReceivedNotification(string profile, int notification){
   database.RemoveReceivedNotifications(profile,notification);
   cout << "removing received notification of " << profile << " with notification ID " << notification << endl;
+  database.PrintDatabase();
 
 }
 
@@ -235,6 +234,10 @@ void replicaManager::updateReceivedNotification(string profile, int notification
 
 
 void replicaManager::updatePendingNotification(string follower, string profile, int notification, int port){
+  PendingNotification* notif = database.GetPendingNotification(follower,profile,notification);
+
+  notif->last_read_by = port;
+  cout << "Pending notification of " << follower << " received from " << profile <<  " << had last read by updated to " << port  << endl;
 
 }
 

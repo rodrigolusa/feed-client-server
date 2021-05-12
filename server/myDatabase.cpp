@@ -259,6 +259,26 @@ ReceivedNotification* MyDatabase::GetReceivedNotification(string profile, int id
     return ret;
 }
 
+PendingNotification* MyDatabase::GetPendingNotification(string follower,string profile, int id){
+    PendingNotification* ret;
+    list<Profile>::iterator it;
+    for(it = data.begin(); it!= data.end(); it++){
+        if(it->id == profile){
+            list<PendingNotification>::iterator it_r;
+            for(it_r = it->pendingNotifications.begin(); it_r != it->pendingNotifications.end(); it_r++){
+                if(it_r->notificationId == id && it_r->profileId == profile){
+                    ret = &(*it_r);
+                    break;
+                }
+            }
+            break;
+        }
+    }
+    return ret;
+}
+
+
+
 list<ReceivedNotification> MyDatabase::GetReceivedNotifications(string profile){
     list<ReceivedNotification> ret;
     list<Profile>::iterator it;
@@ -438,7 +458,11 @@ void MyDatabase::WriteReceivedFile(string username, ReceivedNotification rn){ //
   dataToWrite.append(" ");
   dataToWrite.append(rn.timestamp);
   dataToWrite.append(" ");
+  dataToWrite.append(";");
+  dataToWrite.append(" ");
   dataToWrite.append(rn.message);
+  dataToWrite.append(" ");
+  dataToWrite.append(";");
   dataToWrite.append(" ");
   dataToWrite.append(to_string(rn.size));
   dataToWrite.append(" ");
@@ -448,6 +472,45 @@ void MyDatabase::WriteReceivedFile(string username, ReceivedNotification rn){ //
   dataToWrite.append("\n");
   received_notifs_f << dataToWrite;
   received_notifs_f.close();
+}
+
+
+void MyDatabase::UpdateReceivedNotificationInFile(int notificationId, int count){
+  fstream temp;
+  string line,id, timestamp, token, size, pendingFollowers;
+  string message = "";
+  string dataToWrite = "";
+  received_notifs_f.open("received-notif.txt",fstream::in);
+  temp.open("temp-received.txt",fstream::out);
+
+  while(getline(received_notifs_f,line)){
+  stringstream lineStream(line);
+  lineStream >> id;
+    if(stoi(id) == notificationId)
+      {
+        lineStream >>timestamp;
+        lineStream >> token;
+        do{
+          lineStream >> token;
+          message += token;
+          lineStream >> token;
+        }while(token != ";");
+        lineStream >> size;
+        lineStream >> pendingFollowers;
+        dataToWrite = id + " " + timestamp + " " + token + " " + message + " " + size + " " + to_string(count) + "\n";
+        temp << dataToWrite;
+      }
+    else
+    {
+      line.append("\n");
+      temp << line;
+    continue;
+    }
+  }
+  received_notifs_f.close();
+  temp.close();
+  remove("received-notif.txt");
+  rename("temp-received.txt","received-notif.txt");
 }
 
 
@@ -477,7 +540,7 @@ void MyDatabase::RemoveReceivedFromFile(int idToRemove){
   rename("temp-received.txt","received-notif.txt");
 }
 
-void MyDatabase::RemovePendingsFile(PendingNotification* pendingstoRemove, int removeSize, string profile){
+void MyDatabase::RemovePendingsFile(PendingNotification* pendingstoRemove, int removeSize, string profile, PendingNotification* pendingstoUpdate,int updateSize,int port){
   fstream temp;
   string line,id, dataToWrite, username,follower;
   bool removeBool = false;
@@ -496,8 +559,18 @@ void MyDatabase::RemovePendingsFile(PendingNotification* pendingstoRemove, int r
         break;
       }
     }
-    if(removeBool){
+
+    for(int i = 0; i < updateSize; i ++){
+        if(pendingstoUpdate[i].profileId == username && pendingstoUpdate[i].notificationId == stoi(id) && profile == follower){
+          dataToWrite.clear();
+          dataToWrite = follower + " " + username + " " + id + " " + to_string(port) + "\n";
+          temp << dataToWrite;
+          break;
+        }
+      }
+    if(removeBool || update){
       removeBool = false;
+      update = false;
       continue;
     }
     else
@@ -536,28 +609,36 @@ void MyDatabase::initPendingNotif(){
 void MyDatabase::initReceivedNotif(){//AQUIII
   string id;
   string timestamp;
-  string message;
+  string message = "";
   string size;
   string pendingFollowersToReceive;
   string username;
+  string token ="";
+  string discard;
   int idNum = 0;
   while(received_notifs_f >> id){
     received_notifs_f >> timestamp;
-    received_notifs_f >> message;
+    received_notifs_f >> discard;
+    do{
+      message+= token;
+      received_notifs_f >> token;
+      if(token != ";")
+        message += " ";
+    }while(token != ";");
     received_notifs_f >> size;
     received_notifs_f >> pendingFollowersToReceive;
     received_notifs_f >> username;
-
     ReceivedNotification rn;
     rn.id = stoi(id);
     rn.timestamp = (char*)timestamp.c_str();
     rn.message = message;
     rn.size=  stoi(size);
     rn.pendingFollowersToReceive = stoi(pendingFollowersToReceive);
-
     idNum = rn.id;
 
     AddReceivedNotifications(username,rn);
+    message.clear();
+    token.clear();
   }
   notificationId = idNum; //last notification id is the highest.
 }

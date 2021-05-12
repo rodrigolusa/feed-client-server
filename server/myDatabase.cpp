@@ -432,7 +432,7 @@ void MyDatabase::WritePendingFile(string follower, PendingNotification pn){
   pending_notifs_f.close();
 }
 
-void MyDatabase::WriteReceivedFile(string username, ReceivedNotification rn){
+void MyDatabase::WriteReceivedFile(string username, ReceivedNotification rn){ //AQUIII
   received_notifs_f.open("received-notif.txt",fstream::app);
   string dataToWrite(to_string(rn.id));
   dataToWrite.append(" ");
@@ -533,7 +533,7 @@ void MyDatabase::initPendingNotif(){
   }
 }
 
-void MyDatabase::initReceivedNotif(){
+void MyDatabase::initReceivedNotif(){//AQUIII
   string id;
   string timestamp;
   string message;

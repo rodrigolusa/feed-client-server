@@ -82,25 +82,23 @@ void primaryManager::sendKeepAlive(replicaManager* replica){
 void primaryManager::connecttoOlderClients(replicaManager* replica){
 
 list<Profile>::iterator it;
-int newsockfd;
 Session_Replica* info;
 Session* new_session;
 
 for(it = database.data.begin(); it != database.data.end(); it++){
 
 	for(int i = 0; i < 2; i++){
+			int newsockfd = createSocket();
 		if(it->backup_ports[i] != -1){//if port is different than -1, then we have an active session.
-				newsockfd = createSocket();
 				if(connectToSv(it->backup_hosts[i],it->backup_ports[i],newsockfd)){
-				info = new Session_Replica();
-			 	new_session = new Session(newsockfd,it->backup_hosts[i]);
-				new_session->setPort(it->backup_ports[i]);
-				new_session->setUsername(it->id);
-				cout << it->id << endl;
-				info->replica = replica;
-				info->session = new_session;
-				pthread_t new_thread;
-				pthread_create(&new_thread, NULL, NotificationProducer, info);
+					info = new Session_Replica();
+				 	new_session = new Session(newsockfd,it->backup_hosts[i]);
+					new_session->setPort(it->backup_ports[i]);
+					new_session->setUsername(it->id);
+					info->replica = replica;
+					info->session = new_session;
+					pthread_t new_thread;
+					pthread_create(&new_thread, NULL, NotificationProducer, info);
 					pthread_detach(new_thread);
 				}
 

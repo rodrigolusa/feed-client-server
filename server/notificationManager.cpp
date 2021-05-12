@@ -170,8 +170,6 @@ void* NotificationProducer(void* arg){
   pthread_create(&new_thread2, NULL, NotificationConsumer, info);
   pthread_detach(new_thread2);
   list<PendingDelayed> pending_list;
-    for(int i = 0; i < MAX_NUM_REPLICAS-1; i++)
-      cout << replica->connection_ports[i] << endl;
   Profile* userprofile = database.getProfile(name);
   //make socket non-blocking
   fcntl(user->getSocket(), F_SETFL, fcntl(user->getSocket(), F_GETFL, 0) | O_NONBLOCK);
@@ -179,7 +177,6 @@ void* NotificationProducer(void* arg){
 	while(user->isActive() && replica->isPrimary()){
 
 		packet* pkt = user->readMessage();
-
 		if(user->isActive() == true){//if user crashed, connection is no longer active
 
 			ReceivedNotification rn;

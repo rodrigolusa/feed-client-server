@@ -118,16 +118,20 @@ packet* BasicComm::readMessage(){
   int dataRecv = 0;
   while(dataRecv < maxPacketSize){
     n = read(this->sckt, serialized+dataRecv, maxPacketSize);
-    if (n < 0){
-      delete[] serialized;
-      return NULL;
-    }
-    if (n == 0){
-      delete[] serialized;
-      connectionInterrupted();
-      return NULL;
-    }
+
     dataRecv += n;
+    if(n < 0 || n == 0)
+      break;
+  }
+  if (dataRecv == 0){
+    delete[] serialized;
+    connectionInterrupted();
+    return NULL;
+  }
+
+  if (dataRecv < 0){
+    delete[] serialized;
+    return NULL;
   }
   packet* pkt = deserializeData(serialized);
 

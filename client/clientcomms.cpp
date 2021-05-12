@@ -77,24 +77,18 @@ void ClientComms::attemptReconnect(){
   setActive(true);
 }
 void ClientComms::connectionInterrupted(){ //closes connection between client and server
-
-  if(this->active && !(this->not_reconnected)){
-    sendMessage(LOGOUT);
-    close(this->sckt);
-    return;
-    }
-  else{
     pthread_mutex_lock(&(this->reconnecting_mutex));
     while(this->not_reconnected)//waiting for reconnect
       pthread_cond_wait(&(this->has_reconnected),&(this->reconnecting_mutex));
     pthread_mutex_unlock(&(this->reconnecting_mutex));
     this->not_reconnected = true;
     return;
-  }
+
 }
 
 
 void ClientComms::closeSocket(){
+  sendMessage(LOGOUT);
   close(this->sckt);
 }
 
@@ -140,6 +134,10 @@ void* waitForBackupConn(void* args){
 
 
   comms->backup_socket = socket;
+
+
+  while(true){
+
   int newsockfd = 0;
   struct sockaddr_in cli_addr;
   socklen_t clilen;
@@ -158,6 +156,5 @@ void* waitForBackupConn(void* args){
   comms->not_reconnected = false;
   pthread_mutex_unlock(&(comms->reconnecting_mutex));
   pthread_cond_broadcast(&(comms->has_reconnected));//allowing comms to continue after reconnected
-
-
+  }
 }

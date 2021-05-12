@@ -146,7 +146,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if (resBtn != QMessageBox::Yes) {
         event->ignore();
     } else {
-        comm->connectionInterrupted();
+        comm->closeSocket();
         event->accept();
     }
 }

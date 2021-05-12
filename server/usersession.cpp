@@ -65,7 +65,6 @@ void Session::flushsendingQueue(){
 
 
 void Session::connectionInterrupted(){ //closes socket and removes session from vector
-  cout << "entrei no interrupted" << endl;
   close(this->sckt);
   if(!(this->isActive()))//if it's false, then we've already done this with other thread
     return;

@@ -37,24 +37,21 @@ void* readMessageFromReplica(void* args){
   setsockopt(comms->getSocket(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
   while(comms->isActive()){
 
-      packet* pkt = comms->readMessage();
-
-
-
+    packet* pkt = comms->readMessage();
 
     if(replica->ongoing_election){
         replica->electionActions(pkt,comms);
+        continue;
       }
 
     if(replica->isPrimary()){
       if(pkt == NULL) //if pkt is empty, just ignore.
         continue;
 
-        else if(pkt->type == ELECTION){
+        else if(pkt->type == ELECTION || pkt->type == COORDINATOR){
           replica->ongoing_election = true;
           replica->electionActions(pkt,comms);
           }
-
 
         }
     else{

@@ -324,6 +324,7 @@ void replicaManager::checkIfOnlyBackup(){
     if(this->connection_sockets[i] != -1)
       last_one = false;
     }
-    if(last_one)
-      announceCoordinator();//if this replica is the last one remaining, become coordinator and primary.
+    if(last_one){
+      announceCoordinator();
+    } //if this replica is the last one remaining, become coordinator and primary.
 }

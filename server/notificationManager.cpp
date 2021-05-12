@@ -64,12 +64,46 @@ void findNotificationsToRemove(string profile, int port,replicaManager* replica)
         remove_vec = new PendingNotification[removeSize];
         update_vec = new PendingNotification[updateSize];
 
+        for(it = pending_list.begin();it != pending_list.end();it++){
+          if(it->last_read_by == -2){
+            update_vec[upidx] = *it;
+            upidx++;
+            prof = database.getProfile(it->profileId);
+            string data = "";
+            data.clear();
+            data = profile + " " + it->profileId + " " + to_string(it->notificationId) + " " + to_string(port);
+            replica->sendmessagetoAllReplicas(UPDATE_PENDING,(char*)data.c_str());
+          }
+          else
+            if(it->last_read_by != port){
+              remove_vec[rmidx] = *it;
+              rmidx++;
+              prof = database.getProfile(it->profileId);
+              string data = "";
+              data.clear();
+              data = profile + " " + it->profileId + " " + to_string(it->notificationId);
+              replica->sendmessagetoAllReplicas(REMOVE_PENDING,(char*)data.c_str());
+            }
+            pthread_mutex_lock(&(prof->receivenotification_mutex));
+            ReceivedNotification* notif = database.GetReceivedNotification(it->profileId,it->notificationId);
+            pthread_mutex_unlock(&(prof->receivenotification_mutex));
+            if(notif->pendingFollowersToReceive == 0){
+              string data;
+              data.clear();
+              data += it->profileId;
+              data += " ";
+              data += to_string(notif->id);
+              replica->sendmessagetoAllReplicas(REMOVE_RECEIVED,(char*)data.c_str());
+              database.RemoveReceivedFromFile(notif->id);
+            }
 
+          }
 
+          database.RemovePendingsFile(remove_vec,removeSize,profile,update_vec,updateSize,port);
+          delete[] remove_vec;
+          delete[] update_vec;
 
     }
-
-
 
   }
 
@@ -160,8 +194,16 @@ void* NotificationConsumer(void* arg){
         pthread_mutex_lock(&(notif_prof->receivenotification_mutex));
         ReceivedNotification* notif = database.GetReceivedNotification(it_p->profileId,it_p->notificationId);
         cout << database.GetActiveSessionsNumber(user->getUsername()) << endl;
-        if(it_p->last_read_by != -2 || (database.GetActiveSessionsNumber(user->getUsername()) == 1))//if it is not -2 nor our socket, then another socket already read it and we can decrease it
+        if(it_p->last_read_by != -2 || (database.GetActiveSessionsNumber(user->getUsername()) == 1)){//if it is not -2 nor our socket, then another socket already read it and we can decrease it
           notif->pendingFollowersToReceive--;
+          string data;
+          data += it_p->profileId;
+          data += " ";
+          data += to_string(notif->id);
+          data += " " + to_string(notif->pendingFollowersToReceive);
+          replica->sendmessagetoAllReplicas(UPDATE_RECEIVED,(char*)data.c_str());
+          database.UpdateReceivedNotificationInFile(notif->id,notif->pendingFollowersToReceive,it_p->profileId);
+        }
         pthread_mutex_unlock(&(notif_prof->receivenotification_mutex));
         msg.username = (char*)it_p->profileId.c_str();
         msg.message = (char*)notif->message.c_str();

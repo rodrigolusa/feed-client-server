@@ -263,7 +263,7 @@ PendingNotification* MyDatabase::GetPendingNotification(string follower,string p
     PendingNotification* ret;
     list<Profile>::iterator it;
     for(it = data.begin(); it!= data.end(); it++){
-        if(it->id == profile){
+        if(it->id == follower){
             list<PendingNotification>::iterator it_r;
             for(it_r = it->pendingNotifications.begin(); it_r != it->pendingNotifications.end(); it_r++){
                 if(it_r->notificationId == id && it_r->profileId == profile){
@@ -475,7 +475,7 @@ void MyDatabase::WriteReceivedFile(string username, ReceivedNotification rn){ //
 }
 
 
-void MyDatabase::UpdateReceivedNotificationInFile(int notificationId, int count){
+void MyDatabase::UpdateReceivedNotificationInFile(int notificationId, int count, string profile){
   fstream temp;
   string line,id, timestamp, token, size, pendingFollowers;
   string message = "";
@@ -497,7 +497,7 @@ void MyDatabase::UpdateReceivedNotificationInFile(int notificationId, int count)
         }while(token != ";");
         lineStream >> size;
         lineStream >> pendingFollowers;
-        dataToWrite = id + " " + timestamp + " " + token + " " + message + " " + size + " " + to_string(count) + "\n";
+        dataToWrite = id + " " + timestamp + " " + ";" + " " + message + " " + ";" + " " + size + " " + to_string(count) + " " + profile + "\n";
         temp << dataToWrite;
       }
     else

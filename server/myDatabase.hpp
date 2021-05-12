@@ -3,6 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 #include <list>
 #include "profile.hpp"
 #include <pthread.h>
@@ -56,7 +57,7 @@ public:
     void initReceivedNotif();
     void UpdateProfileInFile(string profile, string oldhost, int oldport, string newhost = "-1",int newport = -1);
     int GetActiveFollowersNumber(string profile);
-    void UpdateReceivedNotificationInFile(int notificationId, int count);
+    void UpdateReceivedNotificationInFile(int notificationId, int count,string profile);
     PendingNotification* GetPendingNotification(string follower,string profile, int id);
 };
 extern MyDatabase database;

@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <list>
+#include <algorithm>
 #include <pthread.h>
 #include "receivedNotification.hpp"
 #include "pendingNotification.hpp"

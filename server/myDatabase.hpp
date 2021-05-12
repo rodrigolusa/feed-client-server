@@ -5,6 +5,7 @@
 #include <fstream>
 #include <algorithm>
 #include <list>
+#include <algorithm>
 #include "profile.hpp"
 #include <pthread.h>
 #include "../common/basiccomm.hpp"
